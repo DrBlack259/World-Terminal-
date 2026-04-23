@@ -1,9 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
-import { TrendingUp, Search, Filter, RefreshCw } from "lucide-react";
+import { TrendingUp, Search, RefreshCw } from "lucide-react";
 import { dealsData } from "@/lib/mockData";
 import { Deal } from "@/types";
-import { dealStatusColor, formatMillions, timeAgo } from "@/lib/utils";
+import { dealStatusColor, timeAgo } from "@/lib/utils";
+import { useCurrency } from "@/context/CurrencyContext";
 import SectionHeader from "@/components/shared/SectionHeader";
 import LiveBadge from "@/components/shared/LiveBadge";
 import StatCard from "@/components/shared/StatCard";
@@ -21,12 +22,14 @@ export default function DealsPage() {
   const [selected, setSelected] = useState<Deal | null>(null);
   const [newDealFlash, setNewDealFlash] = useState(false);
 
+  const { fmt, selectedCurrency, symbol, convert } = useCurrency();
+
   useEffect(() => {
+    const types: Deal["type"][] = ["M&A", "Contract", "Partnership", "Bond", "Acquisition"];
+    const countries = ["UAE", "India", "Germany", "China", "Brazil", "Nigeria", "South Korea"];
+    const sectors = ["Energy", "Technology", "Finance", "Defense", "Mining"];
+    const companies = ["TotalEnergies", "Aramco", "Goldman Sachs", "Softbank", "Tencent", "ADIA", "EDF", "Siemens"];
     const t = setInterval(() => {
-      const types: Deal["type"][] = ["M&A", "Contract", "Partnership", "Bond", "Acquisition"];
-      const countries = ["UAE", "India", "Germany", "China", "Brazil", "Nigeria", "South Korea"];
-      const sectors = ["Energy", "Technology", "Finance", "Defense", "Mining"];
-      const companies = ["Total Energies", "Aramco", "Goldman Sachs", "Softbank", "Tencent", "ADIA", "EDF", "Siemens"];
       const newDeal: Deal = {
         id: `live-${Date.now()}`,
         type: types[Math.floor(Math.random() * types.length)],
@@ -51,13 +54,10 @@ export default function DealsPage() {
 
   const filtered = deals.filter((d) => {
     const matchSearch = search === "" || d.title.toLowerCase().includes(search.toLowerCase()) || d.parties.some((p) => p.toLowerCase().includes(search.toLowerCase()));
-    const matchSector = sector === "All" || d.sector === sector;
-    const matchRegion = region === "All" || d.region === region;
-    const matchStatus = status === "All" || d.status === status;
-    return matchSearch && matchSector && matchRegion && matchStatus;
+    return matchSearch && (sector === "All" || d.sector === sector) && (region === "All" || d.region === region) && (status === "All" || d.status === status);
   });
 
-  const totalValue = deals.reduce((s, d) => s + d.value, 0);
+  const totalValueMn = deals.reduce((s, d) => s + d.value, 0);
   const completed = deals.filter((d) => d.status === "COMPLETED").length;
   const pending = deals.filter((d) => d.status === "PENDING" || d.status === "ANNOUNCED").length;
 
@@ -67,7 +67,7 @@ export default function DealsPage() {
 
       <div className="grid grid-cols-5 gap-2 p-3 border-b border-terminal-border flex-shrink-0">
         <StatCard label="Total Tracked" value={deals.length} color="green" icon={TrendingUp} />
-        <StatCard label="Deal Volume" value={`$${(totalValue / 1000).toFixed(1)}B`} color="green" />
+        <StatCard label={`Volume (${selectedCurrency})`} value={fmt(totalValueMn)} color="green" />
         <StatCard label="Completed" value={completed} color="green" />
         <StatCard label="Active/Pending" value={pending} color="amber" />
         <StatCard label="Rumored" value={deals.filter((d) => d.status === "RUMORED").length} color="purple" />
@@ -76,27 +76,25 @@ export default function DealsPage() {
       <div className="flex items-center gap-2 px-3 py-2 border-b border-terminal-border flex-shrink-0 bg-terminal-panel">
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-terminal-text-dim" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search deals, parties..."
-            className="w-full bg-terminal-bg border border-terminal-border rounded pl-7 pr-3 py-1 text-[10px] text-terminal-text placeholder-terminal-text-muted focus:outline-none focus:border-terminal-green/50"
-          />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search deals, parties..." className="w-full bg-terminal-bg border border-terminal-border rounded pl-7 pr-3 py-1 text-[10px] text-terminal-text placeholder-terminal-text-muted focus:outline-none focus:border-terminal-green/50" />
         </div>
         <select value={sector} onChange={(e) => setSector(e.target.value)} className="bg-terminal-bg border border-terminal-border rounded px-2 py-1 text-[10px] text-terminal-text focus:outline-none">
-          {SECTORS.map((s) => <option key={s} value={s}>{s}</option>)}
+          {SECTORS.map((s) => <option key={s}>{s}</option>)}
         </select>
         <select value={region} onChange={(e) => setRegion(e.target.value)} className="bg-terminal-bg border border-terminal-border rounded px-2 py-1 text-[10px] text-terminal-text focus:outline-none">
-          {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+          {REGIONS.map((r) => <option key={r}>{r}</option>)}
         </select>
         <select value={status} onChange={(e) => setStatus(e.target.value)} className="bg-terminal-bg border border-terminal-border rounded px-2 py-1 text-[10px] text-terminal-text focus:outline-none">
-          {STATUS_LIST.map((s) => <option key={s} value={s}>{s}</option>)}
+          {STATUS_LIST.map((s) => <option key={s}>{s}</option>)}
         </select>
         {newDealFlash && (
           <div className="flex items-center gap-1 text-[9px] text-terminal-green animate-pulse">
             <RefreshCw className="w-3 h-3" /> NEW DEAL
           </div>
         )}
+        <div className="ml-auto text-[9px] text-terminal-text-dim flex items-center gap-1">
+          Values in <span className="text-terminal-green font-bold">{selectedCurrency}</span>
+        </div>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
@@ -110,36 +108,26 @@ export default function DealsPage() {
                 <th className="px-3 py-2 text-left">PARTIES</th>
                 <th className="px-3 py-2 text-left">SECTOR</th>
                 <th className="px-3 py-2 text-left">REGION</th>
-                <th className="px-3 py-2 text-right">VALUE</th>
+                <th className="px-3 py-2 text-right">VALUE ({selectedCurrency})</th>
                 <th className="px-3 py-2 text-center">STATUS</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-terminal-border/30">
               {filtered.map((d, i) => (
-                <tr
-                  key={d.id}
-                  onClick={() => setSelected(d)}
-                  className={`data-row cursor-pointer ${selected?.id === d.id ? "bg-terminal-green/10" : ""} ${i === 0 && newDealFlash ? "bg-terminal-green/20 animate-pulse" : ""}`}
-                >
+                <tr key={d.id} onClick={() => setSelected(d)} className={`data-row cursor-pointer ${selected?.id === d.id ? "bg-terminal-green/10" : ""} ${i === 0 && newDealFlash ? "bg-terminal-green/20 animate-pulse" : ""}`}>
                   <td className="px-3 py-2 text-terminal-text-dim whitespace-nowrap">{timeAgo(d.timestamp)}</td>
-                  <td className="px-3 py-2">
-                    <span className="badge-blue text-[8px]">{d.type}</span>
-                  </td>
+                  <td className="px-3 py-2"><span className="badge-blue text-[8px]">{d.type}</span></td>
                   <td className="px-3 py-2 max-w-xs">
                     <div className="flex items-center gap-1">
                       {d.isHot && <span className="text-terminal-red text-[8px]">★</span>}
                       <span className="text-terminal-text truncate">{d.title}</span>
                     </div>
                   </td>
-                  <td className="px-3 py-2 text-terminal-text-dim max-w-[200px]">
-                    <span className="truncate block">{d.parties.slice(0, 2).join(" · ")}</span>
-                  </td>
+                  <td className="px-3 py-2 text-terminal-text-dim max-w-[200px]"><span className="truncate block">{d.parties.slice(0, 2).join(" · ")}</span></td>
                   <td className="px-3 py-2 text-terminal-text-dim">{d.sector}</td>
                   <td className="px-3 py-2 text-terminal-text-dim">{d.region}</td>
-                  <td className="px-3 py-2 text-right font-bold text-terminal-green">${(d.value / 1000).toFixed(1)}B</td>
-                  <td className="px-3 py-2 text-center">
-                    <span className={`font-bold text-[9px] ${dealStatusColor(d.status)}`}>{d.status}</span>
-                  </td>
+                  <td className="px-3 py-2 text-right font-bold text-terminal-green">{fmt(d.value)}</td>
+                  <td className="px-3 py-2 text-center"><span className={`font-bold text-[9px] ${dealStatusColor(d.status)}`}>{d.status}</span></td>
                 </tr>
               ))}
             </tbody>
@@ -154,36 +142,27 @@ export default function DealsPage() {
             </div>
             <div className="p-3 space-y-3">
               <div>
-                <span className={`badge-blue text-[8px] mb-2 inline-block`}>{selected.type}</span>
+                <span className="badge-blue text-[8px] mb-2 inline-block">{selected.type}</span>
                 <h3 className="text-terminal-green text-[11px] font-bold leading-snug">{selected.title}</h3>
               </div>
               <div className="space-y-1.5 text-[10px]">
-                <div className="flex justify-between">
-                  <span className="text-terminal-text-dim">VALUE</span>
-                  <span className="text-terminal-green font-bold">${(selected.value / 1000).toFixed(2)}B</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-terminal-text-dim">STATUS</span>
-                  <span className={`font-bold ${dealStatusColor(selected.status)}`}>{selected.status}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-terminal-text-dim">SECTOR</span>
-                  <span className="text-terminal-text">{selected.sector}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-terminal-text-dim">COUNTRY</span>
-                  <span className="text-terminal-text">{selected.country}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-terminal-text-dim">REGION</span>
-                  <span className="text-terminal-text">{selected.region}</span>
-                </div>
+                {[
+                  ["VALUE (USD)", `$${(selected.value / 1000).toFixed(2)}B`],
+                  [`VALUE (${selectedCurrency})`, fmt(selected.value)],
+                  ["STATUS", selected.status],
+                  ["SECTOR", selected.sector],
+                  ["COUNTRY", selected.country],
+                  ["REGION", selected.region],
+                ].map(([k, v]) => (
+                  <div key={k} className="flex justify-between border-b border-terminal-border/30 pb-1">
+                    <span className="text-terminal-text-dim">{k}</span>
+                    <span className={k?.startsWith("VALUE") ? "text-terminal-green font-bold" : k === "STATUS" ? dealStatusColor(selected.status) : "text-terminal-text"}>{v}</span>
+                  </div>
+                ))}
               </div>
               <div>
                 <div className="text-[9px] text-terminal-text-dim uppercase tracking-wider mb-1">Parties</div>
-                {selected.parties.map((p) => (
-                  <div key={p} className="text-terminal-text text-[10px] py-0.5 border-b border-terminal-border/30">{p}</div>
-                ))}
+                {selected.parties.map((p) => <div key={p} className="text-terminal-text text-[10px] py-0.5 border-b border-terminal-border/30">{p}</div>)}
               </div>
               <div>
                 <div className="text-[9px] text-terminal-text-dim uppercase tracking-wider mb-1">Details</div>

@@ -1,0 +1,137 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --terminal-bg: #020408;
+  --terminal-panel: #050d14;
+  --terminal-border: #0f2535;
+  --terminal-green: #00ff88;
+  --terminal-amber: #ffb300;
+  --terminal-red: #ff3366;
+  --terminal-blue: #00aaff;
+  --terminal-cyan: #00ffee;
+  --terminal-text: #c8d8e8;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  background-color: var(--terminal-bg);
+  color: var(--terminal-text);
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  font-size: 13px;
+  overflow: hidden;
+  height: 100vh;
+}
+
+#__next,
+main {
+  height: 100vh;
+  overflow: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--terminal-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #0f2535;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00ff8833;
+}
+
+@layer components {
+  .terminal-panel {
+    @apply bg-terminal-panel border border-terminal-border rounded;
+    box-shadow: inset 0 1px 0 rgba(0, 255, 136, 0.04), 0 4px 24px rgba(0, 0, 0, 0.6);
+  }
+
+  .terminal-header {
+    @apply text-xs font-bold uppercase tracking-widest text-terminal-green-dim border-b border-terminal-border px-3 py-2;
+    letter-spacing: 0.15em;
+  }
+
+  .risk-low {
+    @apply text-terminal-green;
+  }
+  .risk-medium {
+    @apply text-terminal-amber;
+  }
+  .risk-high {
+    @apply text-orange-500;
+  }
+  .risk-critical {
+    @apply text-terminal-red;
+  }
+
+  .badge-green {
+    @apply bg-terminal-green/10 text-terminal-green border border-terminal-green/30 text-xs px-2 py-0.5 rounded;
+  }
+  .badge-amber {
+    @apply bg-terminal-amber/10 text-terminal-amber border border-terminal-amber/30 text-xs px-2 py-0.5 rounded;
+  }
+  .badge-red {
+    @apply bg-terminal-red/10 text-terminal-red border border-terminal-red/30 text-xs px-2 py-0.5 rounded;
+  }
+  .badge-blue {
+    @apply bg-terminal-blue/10 text-terminal-blue border border-terminal-blue/30 text-xs px-2 py-0.5 rounded;
+  }
+  .badge-purple {
+    @apply bg-purple-500/10 text-terminal-purple border border-purple-500/30 text-xs px-2 py-0.5 rounded;
+  }
+
+  .data-row {
+    @apply border-b border-terminal-border/50 hover:bg-terminal-green/5 transition-colors duration-150;
+  }
+
+  .live-dot {
+    @apply w-2 h-2 rounded-full bg-terminal-red animate-pulse;
+    box-shadow: 0 0 6px rgba(255, 51, 102, 0.8);
+  }
+
+  .glow-green {
+    text-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+  }
+  .glow-red {
+    text-shadow: 0 0 8px rgba(255, 51, 102, 0.6);
+  }
+  .glow-amber {
+    text-shadow: 0 0 8px rgba(255, 179, 0, 0.6);
+  }
+}
+
+@layer utilities {
+  .text-shadow-green {
+    text-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+  }
+
+  .scanline::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.03) 2px,
+      rgba(0, 0, 0, 0.03) 4px
+    );
+    pointer-events: none;
+  }
+}

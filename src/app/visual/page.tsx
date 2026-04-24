@@ -4,10 +4,12 @@ import dynamic from "next/dynamic";
 import WorldMapSection, { LayerKey, MarkerData } from "./WorldMapSection";
 import { useCurrency } from "@/context/CurrencyContext";
 import { conflictsData, resourcesData, dealsData, electionsData, intelligenceData, moneyMovesData, globalStats } from "@/lib/mockData";
-import { BarChart2, X, AlertTriangle, TrendingUp, Pickaxe, Vote, Eye, DollarSign, Radio } from "lucide-react";
+import { BarChart2, X, AlertTriangle, TrendingUp, Pickaxe, Vote, Eye, DollarSign, Radio, Rss } from "lucide-react";
 import { timeAgo } from "@/lib/utils";
 import LiveBadge from "@/components/shared/LiveBadge";
 import RiskMeter from "@/components/shared/RiskMeter";
+import LiveFeed from "@/components/shared/LiveFeed";
+import { useLiveData } from "@/hooks/useLiveData";
 
 const RealMapSection = dynamic(() => import("./RealMapSection"), { ssr: false });
 
@@ -154,7 +156,9 @@ export default function VisualPage() {
   const [activeLayers, setActiveLayers] = useState<Set<LayerKey>>(new Set<LayerKey>(["conflicts","resources","deals","elections","intel","money"]));
   const [selected, setSelected] = useState<MarkerData | null>(null);
   const [mapMode, setMapMode] = useState<"svg" | "real">("svg");
+  const [showFeed, setShowFeed] = useState(false);
   const { fmt } = useCurrency();
+  const liveData = useLiveData(60_000);
 
   const toggleLayer = (key: LayerKey) => {
     setActiveLayers(prev => {
@@ -191,8 +195,21 @@ export default function VisualPage() {
             </button>
           ))}
         </div>
-        <div className="ml-auto flex items-center gap-3 text-[9px] text-terminal-text-dim">
+        <div className="ml-auto flex items-center gap-2 text-[9px] text-terminal-text-dim">
           <span className="hidden sm:inline">Click any marker for details</span>
+          {/* Live feed toggle */}
+          <button
+            onClick={() => setShowFeed(f => !f)}
+            className={`relative flex items-center gap-1 px-2 py-1 rounded border text-[9px] font-bold tracking-wider transition-all ${showFeed ? "border-terminal-red text-terminal-red bg-terminal-red/10" : "border-terminal-border text-terminal-text-dim hover:border-terminal-red/50 hover:text-terminal-red"}`}
+          >
+            <Radio className="w-3 h-3" />
+            <span className="hidden sm:inline">LIVE FEED</span>
+            {liveData.newCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-terminal-red text-[7px] font-bold flex items-center justify-center text-white">
+                {liveData.newCount}
+              </span>
+            )}
+          </button>
           {/* REAL / SVG map toggle */}
           <button
             onClick={() => setMapMode(m => m === "svg" ? "real" : "svg")}
@@ -211,6 +228,8 @@ export default function VisualPage() {
         </div>
       </div>
 
+      {/* Map + Live Feed */}
+      <div className="flex-1 flex overflow-hidden">
       {/* Map area */}
       <div className="flex-1 relative overflow-hidden">
         {mapMode === "real" ? (
@@ -236,6 +255,23 @@ export default function VisualPage() {
         {selected && (
           <div className="absolute inset-0 z-20" style={{pointerEvents:"none"}} onClick={() => setSelected(null)}/>
         )}
+      </div>
+
+      {/* Live feed panel */}
+      {showFeed && (
+        <div className="w-72 flex-shrink-0 hidden md:flex flex-col overflow-hidden border-l border-terminal-border">
+          <LiveFeed
+            events={liveData.events}
+            loading={liveData.loading}
+            error={liveData.error}
+            fetchedAt={liveData.fetchedAt}
+            newCount={liveData.newCount}
+            onClearNew={liveData.clearNew}
+            onClose={() => setShowFeed(false)}
+            onRefresh={liveData.refresh}
+          />
+        </div>
+      )}
       </div>
 
       {/* Bottom stats strip */}

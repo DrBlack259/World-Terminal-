@@ -1,10 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { conflictsData, resourcesData, dealsData, electionsData, intelligenceData, moneyMovesData } from "@/lib/mockData";
 import { useCurrency } from "@/context/CurrencyContext";
 
 export type LayerKey = "conflicts" | "resources" | "deals" | "elections" | "intel" | "money";
-
 export type MarkerData =
   | { type: "conflict"; data: (typeof conflictsData)[0] }
   | { type: "resource"; data: (typeof resourcesData)[0] }
@@ -20,83 +19,124 @@ interface Props {
 }
 
 const INTENSITY_COLOR: Record<string, string> = {
-  CRITICAL: "#ff3366", HIGH: "#ff6600", MEDIUM: "#ffb300", LOW: "#00ff88",
+  CRITICAL:"#ff3366", HIGH:"#ff6600", MEDIUM:"#ffb300", LOW:"#00ff88",
 };
-
-const CONFLICT_POS: Record<string, [number, number]> = {
+const CONFLICT_POS: Record<string,[number,number]> = {
   c001:[490,108],c002:[512,168],c003:[502,228],c004:[660,208],c005:[698,225],
   c006:[438,232],c007:[722,172],c008:[224,212],c009:[522,252],c010:[600,168],
 };
-const RESOURCE_POS: Record<string, [number, number]> = {
+const RESOURCE_POS: Record<string,[number,number]> = {
   r001:[218,322],r002:[258,272],r003:[308,58],r004:[480,268],r005:[518,298],
   r006:[490,78],r007:[88,92],r008:[434,202],r009:[720,268],r010:[432,188],
 };
-const ELECTION_POS: Record<string, [number, number]> = {
+const ELECTION_POS: Record<string,[number,number]> = {
   e001:[543,172],e002:[435,88],e003:[762,148],e004:[432,248],e005:[720,262],
   e006:[208,282],e007:[492,148],e008:[245,332],e009:[605,165],e010:[460,342],
 };
-const INTEL_POS: Record<string, [number, number]> = {
+const INTEL_POS: Record<string,[number,number]> = {
   i001:[600,65],i002:[140,165],i003:[548,192],i004:[152,148],i005:[628,195],
   i006:[505,115],i007:[730,138],i008:[498,178],i009:[415,98],i010:[165,152],
   i011:[568,198],i012:[432,188],i013:[248,335],i014:[645,205],i015:[722,172],
 };
-
-const FIN: Record<string, [number, number]> = {
-  NY:[162,148], LDN:[388,98], DXB:[562,188], SIN:[732,258], TKY:[782,132],
-  FRA:[448,88], HKG:[758,178], BOM:[620,202],
+const FIN: Record<string,[number,number]> = {
+  NY:[162,148],LDN:[388,98],DXB:[562,188],SIN:[732,258],
+  TKY:[782,132],FRA:[448,88],HKG:[758,178],BOM:[620,202],
 };
-
 const MONEY_ROUTES: [keyof typeof FIN, keyof typeof FIN][] = [
-  ["NY","LDN"],["LDN","DXB"],["DXB","SIN"],["SIN","TKY"],["NY","FRA"],
-  ["FRA","LDN"],["DXB","BOM"],["HKG","SIN"],["LDN","HKG"],
+  ["NY","LDN"],["LDN","DXB"],["DXB","SIN"],["SIN","TKY"],
+  ["NY","FRA"],["FRA","LDN"],["DXB","BOM"],["HKG","SIN"],["LDN","HKG"],
+];
+const DEAL_ARCS: {from:[number,number];to:[number,number];color:string;dur:string}[] = [
+  {from:[162,148],to:[545,188],color:"#00aaff",dur:"6s"},
+  {from:[388,98], to:[545,188],color:"#00ff88",dur:"7s"},
+  {from:[730,138],to:[568,198],color:"#bb77ff",dur:"5s"},
+  {from:[448,88], to:[625,192],color:"#00aaff",dur:"8s"},
+  {from:[162,148],to:[782,132],color:"#00ff88",dur:"9s"},
+  {from:[432,228],to:[545,188],color:"#ffb300",dur:"6.5s"},
+  {from:[388,98], to:[432,228],color:"#00ff88",dur:"7.5s"},
+  {from:[162,148],to:[388,98], color:"#00aaff",dur:"5.5s"},
 ];
 
-const DEAL_ARCS: { from:[number,number]; to:[number,number]; color:string; dur:string }[] = [
-  { from:[162,148], to:[545,188], color:"#00aaff", dur:"6s" },
-  { from:[388,98],  to:[545,188], color:"#00ff88", dur:"7s" },
-  { from:[730,138], to:[568,198], color:"#bb77ff", dur:"5s" },
-  { from:[448,88],  to:[625,192], color:"#00aaff", dur:"8s" },
-  { from:[162,148], to:[782,132], color:"#00ff88", dur:"9s" },
-  { from:[432,228], to:[545,188], color:"#ffb300", dur:"6.5s" },
-  { from:[388,98],  to:[432,228], color:"#00ff88", dur:"7.5s" },
-  { from:[162,148], to:[388,98],  color:"#00aaff", dur:"5.5s" },
-];
-
-function arcPath(x1:number,y1:number,x2:number,y2:number): string {
-  const cx = (x1+x2)/2;
-  const cy = (y1+y2)/2 - Math.abs(x2-x1)*0.22 - 25;
+function arcPath(x1:number,y1:number,x2:number,y2:number):string {
+  const cx=(x1+x2)/2, cy=(y1+y2)/2-Math.abs(x2-x1)*0.22-25;
   return `M ${x1},${y1} Q ${cx},${cy} ${x2},${y2}`;
 }
 
-export default function WorldMapSection({ activeLayers, onMarkerClick, selectedId }: Props) {
-  const [pulse, setPulse] = useState(0);
+export default function WorldMapSection({activeLayers,onMarkerClick,selectedId}:Props) {
+  const [tick, setTick] = useState(0);
+  const [radarAngle, setRadarAngle] = useState(0);
+  const [mousePos, setMousePos] = useState<[number,number]|null>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const { fmt } = useCurrency();
 
   useEffect(() => {
-    const t = setInterval(() => setPulse(p => p + 1), 900);
-    return () => clearInterval(t);
+    let frame = 0;
+    let raf: number;
+    const loop = () => {
+      frame++;
+      setTick(frame);
+      setRadarAngle(a => (a + 2.4) % 360);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
   }, []);
 
-  const r1 = 8 + (pulse % 4) * 2.5;
-  const r2 = 14 + (pulse % 4) * 2.5;
+  const scanY = ((tick * 0.5) % 460) - 10;
+  const RAD = Math.PI / 180;
+  const rcx=450, rcy=220, rLen=560;
+  const sweepAng = (radarAngle-45+360)%360;
+  const x1s = rcx+rLen*Math.cos(sweepAng*RAD);
+  const y1s = rcy+rLen*Math.sin(sweepAng*RAD);
+  const x1e = rcx+rLen*Math.cos(radarAngle*RAD);
+  const y1e = rcy+rLen*Math.sin(radarAngle*RAD);
+
+  const handleMouseMove = (e:React.MouseEvent<SVGSVGElement>) => {
+    if (!svgRef.current) return;
+    const r = svgRef.current.getBoundingClientRect();
+    setMousePos([
+      Math.round(((e.clientX-r.left)/r.width)*900),
+      Math.round(((e.clientY-r.top)/r.height)*440),
+    ]);
+  };
+  const toLat = (y:number) => (90-(y/440)*180).toFixed(1);
+  const toLng = (x:number) => (-180+(x/900)*360).toFixed(1);
+  const criticalCount = conflictsData.filter(c=>c.intensity==="CRITICAL").length;
 
   return (
-    <svg viewBox="0 0 900 440" className="w-full h-full" preserveAspectRatio="xMidYMid meet" style={{minHeight:200}}>
+    <svg ref={svgRef} viewBox="0 0 900 440" className="w-full h-full"
+      preserveAspectRatio="xMidYMid meet" style={{minHeight:200,cursor:"crosshair"}}
+      onMouseMove={handleMouseMove} onMouseLeave={()=>setMousePos(null)}>
       <defs>
-        <filter id="glow-red"><feGaussianBlur stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-        <filter id="glow-green"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-        <filter id="glow-blue"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-        <filter id="glow-purple"><feGaussianBlur stdDeviation="1.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="gr"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="gr-lg"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="gg"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="gb"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="gp"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="ga"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <radialGradient id="vig" cx="50%" cy="50%" r="70%">
+          <stop offset="0%" stopColor="transparent"/>
+          <stop offset="100%" stopColor="rgba(2,8,16,0.75)"/>
+        </radialGradient>
+        <radialGradient id="rdr" cx="0%" cy="0%" r="100%">
+          <stop offset="0%" stopColor="#00ff88" stopOpacity="0.22"/>
+          <stop offset="70%" stopColor="#00ff88" stopOpacity="0.05"/>
+          <stop offset="100%" stopColor="#00ff88" stopOpacity="0"/>
+        </radialGradient>
+        <linearGradient id="scn" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#00ff88" stopOpacity="0"/>
+          <stop offset="50%" stopColor="#00ff88" stopOpacity="0.1"/>
+          <stop offset="100%" stopColor="#00ff88" stopOpacity="0"/>
+        </linearGradient>
+        <clipPath id="mc"><rect width="900" height="440"/></clipPath>
       </defs>
 
-      {/* Ocean */}
-      <rect width="900" height="440" fill="#020c14" rx="4"/>
+      <rect width="900" height="440" fill="#020c14"/>
+      {[55,110,165,220,275,330,385].map(y=><line key={y} x1="0" y1={y} x2="900" y2={y} stroke="#091a28" strokeWidth="0.4" strokeDasharray="3,14"/>)}
+      {[90,180,270,360,450,540,630,720,810].map(x=><line key={x} x1={x} y1="0" x2={x} y2="440" stroke="#091a28" strokeWidth="0.4" strokeDasharray="3,14"/>)}
+      <line x1="0" y1="220" x2="900" y2="220" stroke="#0f2535" strokeWidth="0.7" strokeDasharray="8,20" opacity="0.7"/>
+      <line x1="450" y1="0" x2="450" y2="440" stroke="#0c1e2e" strokeWidth="0.5" strokeDasharray="4,18" opacity="0.5"/>
 
-      {/* Grid */}
-      {[110,220,330].map(y=><line key={y} x1="0" y1={y} x2="900" y2={y} stroke="#0a1e2e" strokeWidth="0.5" strokeDasharray="4,10"/>)}
-      {[180,360,540,720].map(x=><line key={x} x1={x} y1="0" x2={x} y2="440" stroke="#0a1e2e" strokeWidth="0.5" strokeDasharray="4,10"/>)}
-
-      {/* Continents */}
       {[
         "M55,62 L130,48 L195,55 L225,72 L232,100 L220,138 L200,175 L178,195 L155,202 L130,185 L100,170 L72,148 L55,115 Z",
         "M155,202 L178,195 L192,215 L178,248 L162,255 L150,238 Z",
@@ -112,113 +152,121 @@ export default function WorldMapSection({ activeLayers, onMarkerClick, selectedI
         "M658,88 L752,75 L782,98 L778,148 L748,178 L712,182 L672,162 L655,132 Z",
         "M768,108 L785,102 L790,120 L778,132 L765,125 Z",
         "M702,308 L792,295 L828,322 L822,375 L788,398 L742,398 L705,368 L695,335 Z",
-      ].map((d,i)=>(
-        <path key={i} d={d} fill="#081828" stroke="#0f2535" strokeWidth="1"/>
-      ))}
+      ].map((d,i)=><path key={i} d={d} fill="#081828" stroke="#0f2535" strokeWidth="0.8"/>)}
 
-      {/* ── MONEY FLOW LAYER ── */}
-      {activeLayers.has("money") && MONEY_ROUTES.map(([a,b],i) => {
-        const [x1,y1]=FIN[a], [x2,y2]=FIN[b];
-        const p = arcPath(x1,y1,x2,y2);
-        return (
-          <g key={i}>
-            <path d={p} fill="none" stroke="#00ff88" strokeWidth="0.4" opacity="0.25"/>
-            {[0,1,2].map(offset=>(
-              <circle key={offset} r="2.5" fill="#00ff88" opacity="0.9" filter="url(#glow-green)">
-                <animateMotion dur={`${4+i*0.7}s`} begin={`${-offset*(4+i*0.7)/3}s`} repeatCount="indefinite" path={p}/>
-              </circle>
-            ))}
-          </g>
-        );
+      {/* Radar */}
+      <g clipPath="url(#mc)">
+        <path d={`M ${rcx},${rcy} L ${x1s},${y1s} A ${rLen},${rLen} 0 0,1 ${x1e},${y1e} Z`} fill="url(#rdr)"/>
+        <line x1={rcx} y1={rcy} x2={x1e} y2={y1e} stroke="#00ff88" strokeWidth="1" opacity="0.4" filter="url(#gg)"/>
+        {[100,200,300,400,500].map(r=><circle key={r} cx={rcx} cy={rcy} r={r} fill="none" stroke="#00ff88" strokeWidth="0.25" opacity="0.07"/>)}
+      </g>
+
+      <rect width="900" height="440" fill="url(#vig)"/>
+      <rect x="0" y={scanY} width="900" height="50" fill="url(#scn)"/>
+      <line x1="0" y1={scanY+25} x2="900" y2={scanY+25} stroke="#00ff88" strokeWidth="0.35" opacity="0.18"/>
+
+      {/* Money */}
+      {activeLayers.has("money") && MONEY_ROUTES.map(([a,b],i)=>{
+        const [x1,y1]=FIN[a],[x2,y2]=FIN[b],p=arcPath(x1,y1,x2,y2);
+        return <g key={i}>
+          <path d={p} fill="none" stroke="#00ff88" strokeWidth="0.6" opacity="0.18"/>
+          {[0,1,2,3,4].map(o=><circle key={o} r={o===0?2.5:1.5} fill="#00ff88" opacity={o===0?0.95:0.45} filter={o===0?"url(#gg)":undefined}><animateMotion dur={`${3+i*0.5}s`} begin={`${-o*(3+i*0.5)/5}s`} repeatCount="indefinite" path={p}/></circle>)}
+        </g>;
+      })}
+      {activeLayers.has("money") && Object.entries(FIN).map(([k,[x,y]])=><g key={k}>
+        <circle cx={x} cy={y} r="8" fill="none" stroke="#00ff88" strokeWidth="0.6" opacity="0.15"><animate attributeName="r" values="6;16;6" dur="3s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.2;0.04;0.2" dur="3s" repeatCount="indefinite"/></circle>
+        <circle cx={x} cy={y} r="2.5" fill="#00ff88" opacity="0.95" filter="url(#gg)"/>
+        <text x={x} y={y+13} fontSize="6" fill="#00ff88" textAnchor="middle" opacity="0.55" fontFamily="monospace">{k}</text>
+      </g>)}
+
+      {/* Deals */}
+      {activeLayers.has("deals") && DEAL_ARCS.map((arc,i)=>{
+        const p=arcPath(arc.from[0],arc.from[1],arc.to[0],arc.to[1]);
+        return <g key={i}>
+          <path d={p} fill="none" stroke={arc.color} strokeWidth="1.2" opacity="0.2" strokeDasharray="5,7"><animate attributeName="stroke-dashoffset" from="120" to="0" dur={arc.dur} repeatCount="indefinite"/></path>
+          <circle r="2.5" fill={arc.color} opacity="0.95" filter="url(#gb)"><animateMotion dur={arc.dur} repeatCount="indefinite" path={p}/></circle>
+          <circle r="1.2" fill={arc.color} opacity="0.4"><animateMotion dur={arc.dur} begin={`-${parseFloat(arc.dur)*0.12}s`} repeatCount="indefinite" path={p}/></circle>
+        </g>;
       })}
 
-      {/* ── DEAL ARCS LAYER ── */}
-      {activeLayers.has("deals") && DEAL_ARCS.map((arc,i) => {
-        const p = arcPath(arc.from[0],arc.from[1],arc.to[0],arc.to[1]);
-        return (
-          <g key={i}>
-            <path d={p} fill="none" stroke={arc.color} strokeWidth="0.8" opacity="0.35" strokeDasharray="4,6">
-              <animate attributeName="stroke-dashoffset" from="100" to="0" dur={arc.dur} repeatCount="indefinite"/>
-            </path>
-            <circle r="2" fill={arc.color} opacity="0.9">
-              <animateMotion dur={arc.dur} repeatCount="indefinite" path={p}/>
-            </circle>
-          </g>
-        );
+      {/* Resources */}
+      {activeLayers.has("resources") && resourcesData.map(r=>{
+        const pos=RESOURCE_POS[r.id];if(!pos)return null;
+        const [x,y]=pos,sel=selectedId===r.id;
+        return <g key={r.id} onClick={()=>onMarkerClick({type:"resource",data:r})} style={{cursor:"pointer"}}>
+          <circle cx={x} cy={y} r="10" fill="none" stroke="#ffb300" strokeWidth="0.5" opacity="0.15"><animate attributeName="r" values="8;20;8" dur="3s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.2;0.04;0.2" dur="3s" repeatCount="indefinite"/></circle>
+          <circle cx={x} cy={y} r={sel?12:8} fill="none" stroke="#ffb300" strokeWidth={sel?1.5:0.8} opacity={sel?0.9:0.5}/>
+          <circle cx={x} cy={y} r={sel?5:3} fill="#ffb300" opacity="0.95" filter="url(#ga)"/>
+          <text x={x} y={y-11} fontSize="6.5" fill="#ffb300" textAnchor="middle" opacity="0.8" fontFamily="monospace">{r.resource.slice(0,7)}</text>
+        </g>;
       })}
 
-      {/* ── RESOURCE MARKERS ── */}
-      {activeLayers.has("resources") && resourcesData.map(r => {
-        const pos = RESOURCE_POS[r.id]; if(!pos) return null;
-        const [x,y] = pos;
-        const sel = selectedId === r.id;
-        return (
-          <g key={r.id} onClick={()=>onMarkerClick({type:"resource",data:r})} style={{cursor:"pointer"}}>
-            <circle cx={x} cy={y} r={sel?14:10} fill="none" stroke="#ffb300" strokeWidth={sel?1.5:0.8} opacity={sel?0.8:0.4}/>
-            <circle cx={x} cy={y} r={sel?8:5} fill="none" stroke="#ffb300" strokeWidth={sel?1.2:0.8} opacity={sel?1:0.6}/>
-            <circle cx={x} cy={y} r={sel?3.5:2.5} fill="#ffb300" opacity={sel?1:0.9}/>
-            {sel && <circle cx={x} cy={y} r={18} fill="none" stroke="#ffb300" strokeWidth="1" opacity={0.5-(pulse%4)*0.1}/>}
-          </g>
-        );
+      {/* Elections */}
+      {activeLayers.has("elections") && electionsData.map((e,ei)=>{
+        const pos=ELECTION_POS[e.id];if(!pos)return null;
+        const [x,y]=pos,sel=selectedId===e.id;
+        const pulse=Math.sin((tick*0.03+ei*1.1)%(Math.PI*2))*0.35+0.65;
+        return <g key={e.id} onClick={()=>onMarkerClick({type:"election",data:e})} style={{cursor:"pointer"}}>
+          <circle cx={x} cy={y} r={sel?13:8} fill="none" stroke="#00aaff" strokeWidth="0.6" opacity={pulse*0.35}/>
+          <polygon points={`${x},${y-(sel?9:6)} ${x+(sel?5:3.5)},${y+(sel?4:3)} ${x-(sel?5:3.5)},${y+(sel?4:3)}`} fill="#00aaff" opacity={sel?1:pulse*0.85} filter="url(#gb)"/>
+          <text x={x} y={y-13} fontSize="6.5" fill="#00aaff" textAnchor="middle" opacity="0.85" fontFamily="monospace">{e.country.slice(0,8)}</text>
+        </g>;
       })}
 
-      {/* ── ELECTION MARKERS ── */}
-      {activeLayers.has("elections") && electionsData.map(e => {
-        const pos = ELECTION_POS[e.id]; if(!pos) return null;
-        const [x,y] = pos;
-        const sel = selectedId === e.id;
-        return (
-          <g key={e.id} onClick={()=>onMarkerClick({type:"election",data:e})} style={{cursor:"pointer"}}>
-            <circle cx={x} cy={y} r={r1*0.6} fill="none" stroke="#00aaff" strokeWidth="0.8" opacity="0.3"/>
-            <circle cx={x} cy={y} r={sel?6:4} fill="#00aaff" opacity="0.9" filter="url(#glow-blue)"/>
-            <polygon points={`${x},${y-7} ${x+4},${y+3} ${x-4},${y+3}`} fill="#00aaff" opacity={sel?1:0.7} filter="url(#glow-blue)"/>
-            <text x={x} y={y-10} fontSize="6.5" fill="#00aaff" textAnchor="middle" opacity="0.9" fontFamily="monospace">{e.country.slice(0,8)}</text>
-          </g>
-        );
+      {/* Intel */}
+      {activeLayers.has("intel") && intelligenceData.slice(0,12).map((item,ii)=>{
+        const pos=INTEL_POS[item.id];if(!pos)return null;
+        const [x,y]=pos,sel=selectedId===item.id,isCrit=item.significance==="CRITICAL";
+        const spin=(tick*1.8+ii*28)%360;
+        return <g key={item.id} onClick={()=>onMarkerClick({type:"intel",data:item})} style={{cursor:"pointer"}}>
+          {isCrit&&<circle cx={x} cy={y} r="9" fill="none" stroke="#bb77ff" strokeWidth="0.7" opacity="0.4"><animate attributeName="r" values="7;18;7" dur="2.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.5;0;0.5" dur="2.2s" repeatCount="indefinite"/></circle>}
+          {sel&&<circle cx={x} cy={y} r={15} fill="none" stroke="#bb77ff" strokeWidth="1" opacity="0.55"/>}
+          <rect x={x-4.5} y={y-4.5} width={9} height={9} fill="#bb77ff" opacity={isCrit?1:0.75} transform={`rotate(${spin},${x},${y})`} filter="url(#gp)"/>
+          <text x={x} y={y-11} fontSize="6" fill="#bb77ff" textAnchor="middle" opacity="0.85" fontFamily="monospace">{item.person.split(" ").pop()?.slice(0,7)}</text>
+        </g>;
       })}
 
-      {/* ── INTEL MARKERS ── */}
-      {activeLayers.has("intel") && intelligenceData.slice(0,12).map(item => {
-        const pos = INTEL_POS[item.id]; if(!pos) return null;
-        const [x,y] = pos;
-        const sel = selectedId === item.id;
-        const isCrit = item.significance === "CRITICAL";
-        return (
-          <g key={item.id} onClick={()=>onMarkerClick({type:"intel",data:item})} style={{cursor:"pointer"}}>
-            {sel && <circle cx={x} cy={y} r={12} fill="none" stroke="#bb77ff" strokeWidth="1" opacity="0.5"/>}
-            <rect x={x-3.5} y={y-3.5} width={7} height={7} fill="#bb77ff" opacity={isCrit?1:0.7} transform={`rotate(45,${x},${y})`} filter="url(#glow-purple)"/>
-            <text x={x} y={y-9} fontSize="6" fill="#bb77ff" textAnchor="middle" opacity="0.8" fontFamily="monospace">{item.person.split(" ").pop()?.slice(0,7)}</text>
-          </g>
-        );
+      {/* Conflicts */}
+      {activeLayers.has("conflicts") && conflictsData.map(c=>{
+        const pos=CONFLICT_POS[c.id];if(!pos)return null;
+        const [x,y]=pos,color=INTENSITY_COLOR[c.intensity],sel=selectedId===c.id;
+        const isCrit=c.intensity==="CRITICAL",isHigh=c.intensity==="HIGH";
+        const ps=isCrit?1.6:isHigh?2.2:3;
+        return <g key={c.id} onClick={()=>onMarkerClick({type:"conflict",data:c})} style={{cursor:"pointer"}}>
+          {[0,ps/3,(ps/3)*2].map((delay,di)=><circle key={di} cx={x} cy={y} r="5" fill="none" stroke={color} strokeWidth={isCrit?1.2:0.8}>
+            <animate attributeName="r" values={`5;${isCrit?42:isHigh?32:24};5`} dur={`${ps}s`} begin={`${delay}s`} repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.75;0;0.75" dur={`${ps}s`} begin={`${delay}s`} repeatCount="indefinite"/>
+          </circle>)}
+          <circle cx={x} cy={y} r={sel?22:16} fill="none" stroke={color} strokeWidth="0.6" opacity="0.18"/>
+          <circle cx={x} cy={y} r={sel?13:9} fill="none" stroke={color} strokeWidth={sel?1.8:1.1} opacity="0.6"/>
+          {sel&&<circle cx={x} cy={y} r={28} fill="none" stroke={color} strokeWidth="1.2" opacity="0.5"/>}
+          <circle cx={x} cy={y} r={sel?9:6} fill={color} opacity="0.95" filter={isCrit?"url(#gr-lg)":"url(#gr)"}/>
+          <text x={x} y={y-16} fontSize="7.5" fill={color} textAnchor="middle" opacity="0.95" fontFamily="monospace" fontWeight="bold">{c.country.split("/")[0].trim().slice(0,9)}</text>
+        </g>;
       })}
 
-      {/* ── CONFLICT MARKERS ── */}
-      {activeLayers.has("conflicts") && conflictsData.map(c => {
-        const pos = CONFLICT_POS[c.id]; if(!pos) return null;
-        const [x,y] = pos;
-        const color = INTENSITY_COLOR[c.intensity];
-        const sel = selectedId === c.id;
-        return (
-          <g key={c.id} onClick={()=>onMarkerClick({type:"conflict",data:c})} style={{cursor:"pointer"}}>
-            <circle cx={x} cy={y} r={r2} fill="none" stroke={color} strokeWidth="0.6" opacity="0.15"/>
-            <circle cx={x} cy={y} r={r1} fill="none" stroke={color} strokeWidth="0.9" opacity={0.35}/>
-            {sel && <circle cx={x} cy={y} r={r2+6} fill="none" stroke={color} strokeWidth="1" opacity="0.4"/>}
-            <circle cx={x} cy={y} r={sel?7:5} fill={color} opacity="0.92" filter="url(#glow-red)"/>
-            <text x={x} y={y-12} fontSize="7" fill={color} textAnchor="middle" opacity="0.95" fontFamily="monospace" fontWeight="bold">
-              {c.country.split("/")[0].trim().slice(0,8)}
-            </text>
-          </g>
-        );
-      })}
+      {/* HUD corners */}
+      {([[0,0,1,1],[900,0,-1,1],[0,440,1,-1],[900,440,-1,-1]] as [number,number,number,number][]).map(([bx,by,sx,sy],i)=><g key={i} opacity="0.5">
+        <line x1={bx} y1={by+sy*22} x2={bx} y2={by} stroke="#00ff88" strokeWidth="1.2"/>
+        <line x1={bx} y1={by} x2={bx+sx*22} y2={by} stroke="#00ff88" strokeWidth="1.2"/>
+        <rect x={bx-sx} y={by-sy} width={3} height={3} fill="#00ff88" opacity="0.5"/>
+      </g>)}
 
-      {/* Financial center labels (money layer) */}
-      {activeLayers.has("money") && Object.entries(FIN).map(([k,[x,y]])=>(
-        <text key={k} x={x} y={y+14} fontSize="6" fill="#00ff88" textAnchor="middle" opacity="0.5" fontFamily="monospace">{k}</text>
-      ))}
+      {/* Crosshair */}
+      {mousePos&&<g opacity="0.8">
+        <line x1={mousePos[0]-16} y1={mousePos[1]} x2={mousePos[0]-5} y2={mousePos[1]} stroke="#00ff88" strokeWidth="0.9"/>
+        <line x1={mousePos[0]+5} y1={mousePos[1]} x2={mousePos[0]+16} y2={mousePos[1]} stroke="#00ff88" strokeWidth="0.9"/>
+        <line x1={mousePos[0]} y1={mousePos[1]-16} x2={mousePos[0]} y2={mousePos[1]-5} stroke="#00ff88" strokeWidth="0.9"/>
+        <line x1={mousePos[0]} y1={mousePos[1]+5} x2={mousePos[0]} y2={mousePos[1]+16} stroke="#00ff88" strokeWidth="0.9"/>
+        <circle cx={mousePos[0]} cy={mousePos[1]} r="3.5" fill="none" stroke="#00ff88" strokeWidth="0.9"/>
+        <rect x={mousePos[0]+9} y={mousePos[1]-16} width="76" height="13" fill="#020c14" opacity="0.88" rx="1"/>
+        <text x={mousePos[0]+12} y={mousePos[1]-6} fontSize="7.5" fill="#00ff88" fontFamily="monospace">{toLat(mousePos[1])}°  {toLng(mousePos[0])}°</text>
+      </g>}
 
-      {/* Legend labels */}
-      <text x="10" y="224" fontSize="7" fill="#1a3a4a" fontFamily="monospace">EQUATOR</text>
-      <text x="10" y="432" fontSize="6" fill="#1a3a4a" fontFamily="monospace">WORLD TERMINAL · LIVE INTELLIGENCE</text>
+      <text x="12" y="222" fontSize="6.5" fill="#1a3a4a" fontFamily="monospace">── EQUATOR ──</text>
+      <text x="12" y="434" fontSize="6" fill="#1a3a4a" fontFamily="monospace">WORLD TERMINAL · LIVE INTELLIGENCE</text>
+      <text x="888" y="434" fontSize="6" fill="#ff3366" fontFamily="monospace" textAnchor="end" opacity="0.8">{criticalCount} CRITICAL ACTIVE</text>
+      <circle cx={rcx} cy={rcy} r="2.5" fill="#00ff88" opacity="0.35" filter="url(#gg)"/>
     </svg>
   );
 }

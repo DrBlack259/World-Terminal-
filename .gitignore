@@ -9,3 +9,4 @@ yarn-debug.log*
 out/
 build/
 .vercel
+tsconfig.tsbuildinfo

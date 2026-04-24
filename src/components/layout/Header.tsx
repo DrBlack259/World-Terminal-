@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-import { AlertTriangle, Wifi, Clock, Shield, Zap, ChevronDown, RefreshCw, CheckCircle, XCircle } from "lucide-react";
+import { AlertTriangle, Wifi, Clock, Shield, Zap, ChevronDown, RefreshCw, CheckCircle, XCircle, BarChart2 } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { globalStats } from "@/lib/mockData";
 import { useCurrency } from "@/context/CurrencyContext";
 import { CURRENCIES } from "@/lib/currency";
@@ -13,6 +15,8 @@ export default function Header() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const { selectedCurrency, setSelectedCurrency, info, rates, ratesLoading, ratesError, lastUpdated, refreshRates } = useCurrency();
+  const pathname = usePathname();
+  const isVisual = pathname === "/visual";
 
   useEffect(() => {
     const ti = setInterval(() => setTime(new Date()), 1000);
@@ -76,6 +80,18 @@ export default function Header() {
       </div>
 
       <div className="ml-auto flex items-center gap-3">
+        {/* ── VISUAL button ── */}
+        <Link
+          href={isVisual ? "/" : "/visual"}
+          className={`flex items-center gap-1.5 px-3 py-1 rounded border text-[10px] font-bold tracking-widest uppercase transition-all ${
+            isVisual
+              ? "bg-terminal-purple/20 border-terminal-purple text-terminal-purple shadow-[0_0_12px_rgba(187,119,255,0.3)]"
+              : "bg-terminal-purple/10 border-terminal-purple/40 text-terminal-purple hover:border-terminal-purple hover:shadow-[0_0_12px_rgba(187,119,255,0.25)]"
+          }`}
+        >
+          <BarChart2 className="w-3 h-3" />
+          {isVisual ? "← TERMINAL" : "VISUAL"}
+        </Link>
         {/* ── Currency Selector ────────────────────────────── */}
         <div ref={dropdownRef} className="relative">
           <button

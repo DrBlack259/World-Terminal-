@@ -216,13 +216,17 @@ export default function VisualPage() {
         <button
           onClick={() => setMapMode(m => m === "svg" ? "real" : "svg")}
           title={mapMode === "real" ? "Switch to SVG map" : "Switch to real map"}
-          className="absolute bottom-4 left-4 z-40 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg"
+          className="absolute top-3 right-3 z-40 w-11 h-11 rounded-full flex flex-col items-center justify-center gap-0.5 transition-all duration-200"
           style={mapMode === "real"
-            ? { background: "#00ffee22", border: "1.5px solid #00ffee", color: "#00ffee", boxShadow: "0 0 12px #00ffee55" }
-            : { background: "#050d14cc", border: "1.5px solid #0f2535", color: "#5a7a8a" }
+            ? { background: "#00ffee18", border: "2px solid #00ffee", boxShadow: "0 0 16px #00ffee88, inset 0 0 8px #00ffee22" }
+            : { background: "#050d14ee", border: "2px solid #00ffee60", boxShadow: "0 0 8px #00ffee33" }
           }
         >
-          <span className="text-base leading-none select-none">🌍</span>
+          <span className="text-sm leading-none select-none">🌍</span>
+          <span className="text-[6px] font-bold leading-none tracking-wider select-none"
+            style={{ color: mapMode === "real" ? "#00ffee" : "#00ffeeaa" }}>
+            {mapMode === "real" ? "SVG" : "REAL"}
+          </span>
         </button>
 
         {/* Detail panel */}

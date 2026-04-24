@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import WorldMapSection, { LayerKey, MarkerData } from "./WorldMapSection";
 import { useCurrency } from "@/context/CurrencyContext";
 import { conflictsData, resourcesData, dealsData, electionsData, intelligenceData, moneyMovesData, globalStats } from "@/lib/mockData";
@@ -7,6 +8,8 @@ import { BarChart2, X, AlertTriangle, TrendingUp, Pickaxe, Vote, Eye, DollarSign
 import { timeAgo } from "@/lib/utils";
 import LiveBadge from "@/components/shared/LiveBadge";
 import RiskMeter from "@/components/shared/RiskMeter";
+
+const RealMapSection = dynamic(() => import("./RealMapSection"), { ssr: false });
 
 const LAYERS: { key: LayerKey; label: string; color: string; icon: React.ReactNode; count: number }[] = [
   { key:"conflicts", label:"CONFLICTS", color:"#ff3366", icon:<AlertTriangle className="w-3 h-3"/>, count:conflictsData.length },
@@ -150,6 +153,7 @@ function DetailPanel({ marker, onClose, fmt }: { marker: MarkerData; onClose: ()
 export default function VisualPage() {
   const [activeLayers, setActiveLayers] = useState<Set<LayerKey>>(new Set<LayerKey>(["conflicts","resources","deals","elections","intel","money"]));
   const [selected, setSelected] = useState<MarkerData | null>(null);
+  const [mapMode, setMapMode] = useState<"svg" | "real">("svg");
   const { fmt } = useCurrency();
 
   const toggleLayer = (key: LayerKey) => {
@@ -188,17 +192,40 @@ export default function VisualPage() {
           ))}
         </div>
         <div className="ml-auto flex items-center gap-3 text-[9px] text-terminal-text-dim">
-          <span>Click any marker for details</span>
+          <span className="hidden sm:inline">Click any marker for details</span>
+          {/* REAL / SVG map toggle */}
+          <button
+            onClick={() => setMapMode(m => m === "svg" ? "real" : "svg")}
+            title={mapMode === "real" ? "Switch to SVG map" : "Switch to real world map"}
+            className="w-9 h-9 rounded-full flex flex-col items-center justify-center gap-0.5 flex-shrink-0 transition-all duration-200"
+            style={mapMode === "real"
+              ? { background: "#ffffff18", border: "2px solid #ffffff", boxShadow: "0 0 10px #ffffff66" }
+              : { background: "#050d14", border: "2px solid #ffffff88", boxShadow: "0 0 6px #ffffff22" }
+            }
+          >
+            <span className="text-sm leading-none select-none">🌍</span>
+            <span className="text-[6px] font-bold leading-none tracking-wider select-none" style={{ color: "#ffffff" }}>
+              {mapMode === "real" ? "SVG" : "REAL"}
+            </span>
+          </button>
         </div>
       </div>
 
       {/* Map area */}
       <div className="flex-1 relative overflow-hidden">
-        <WorldMapSection
-          activeLayers={activeLayers}
-          onMarkerClick={m => setSelected(m)}
-          selectedId={selected?.data.id ?? null}
-        />
+        {mapMode === "real" ? (
+          <RealMapSection
+            activeLayers={activeLayers}
+            onMarkerClick={m => setSelected(m)}
+            selectedId={selected?.data.id ?? null}
+          />
+        ) : (
+          <WorldMapSection
+            activeLayers={activeLayers}
+            onMarkerClick={m => setSelected(m)}
+            selectedId={selected?.data.id ?? null}
+          />
+        )}
 
         {/* Detail panel */}
         {selected && (

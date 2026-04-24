@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { DollarSign, TrendingUp, TrendingDown, Activity, Building2 } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Activity, Building2, ChevronLeft } from "lucide-react";
 import { moneyMovesData } from "@/lib/mockData";
 import { MoneyMove } from "@/types";
 import { timeAgo } from "@/lib/utils";
@@ -26,9 +26,10 @@ const isBuy = (type: string) => ["BUY", "ACCUMULATE", "COVER"].includes(type);
 
 export default function MoneyFlowPage() {
   const [moves, setMoves] = useState<MoneyMove[]>(moneyMovesData);
-  const [selected, setSelected] = useState<MoneyMove | null>(moneyMovesData[0]);
+  const [selected, setSelected] = useState<MoneyMove | null>(null);
   const [filterType, setFilterType] = useState<"ALL" | "BUY" | "SELL">("ALL");
   const [filterSig, setFilterSig] = useState<"ALL" | MoneyMove["significance"]>("ALL");
+  const [showDetail, setShowDetail] = useState(false);
 
   const { fmt, selectedCurrency, convert, symbol } = useCurrency();
 
@@ -62,7 +63,6 @@ export default function MoneyFlowPage() {
   const totalSellMn = moves.filter((m) => !isBuy(m.type)).reduce((s, m) => s + m.valueMn, 0);
   const netFlowMn = totalBuyMn - totalSellMn;
 
-  // Chart data — convert to selected currency
   const institutionChart = Object.entries(
     moves.slice(0, 20).reduce((acc: Record<string, number>, m) => {
       acc[m.institution] = (acc[m.institution] || 0) + (isBuy(m.type) ? m.valueMn : -m.valueMn);
@@ -80,11 +80,16 @@ export default function MoneyFlowPage() {
     return `${symbol}${v.toFixed(0)}M`;
   };
 
+  const handleSelect = (m: MoneyMove) => {
+    setSelected(m);
+    setShowDetail(true);
+  };
+
   return (
     <div className="flex flex-col h-full">
       <SectionHeader title="Institutional Money Flow" subtitle="JPMorgan · BlackRock · Goldman · Sovereign Funds · Hedge Funds — real-time flows" icon={DollarSign} count={filtered.length} />
 
-      <div className="grid grid-cols-5 gap-2 p-3 border-b border-terminal-border flex-shrink-0">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 p-3 border-b border-terminal-border flex-shrink-0">
         <StatCard label={`Inflows (${selectedCurrency})`} value={fmt(totalBuyMn)} color="green" icon={TrendingUp} trend="up" trendValue="+12%" />
         <StatCard label={`Outflows (${selectedCurrency})`} value={fmt(totalSellMn)} color="red" icon={TrendingDown} />
         <StatCard label={`Net (${selectedCurrency})`} value={`${netFlowMn > 0 ? "+" : ""}${fmt(Math.abs(netFlowMn))}`} color={netFlowMn > 0 ? "green" : "red"} />
@@ -92,38 +97,33 @@ export default function MoneyFlowPage() {
         <StatCard label="Institutions" value={new Set(moves.map((m) => m.institution)).size} color="purple" icon={Building2} />
       </div>
 
-      <div className="flex items-center gap-3 px-3 py-2 border-b border-terminal-border flex-shrink-0">
+      <div className="flex items-center gap-3 px-3 py-2 border-b border-terminal-border flex-shrink-0 flex-wrap gap-y-1">
         <div className="flex gap-1">
           {(["ALL", "BUY", "SELL"] as const).map((f) => (
             <button key={f} onClick={() => setFilterType(f)} className={`text-[9px] px-2 py-1 rounded border font-bold tracking-wider transition-colors ${filterType === f ? (f === "SELL" ? "border-terminal-red text-terminal-red bg-terminal-red/10" : "border-terminal-green text-terminal-green bg-terminal-green/10") : "border-terminal-border text-terminal-text-dim"}`}>{f}</button>
           ))}
         </div>
-        <div className="w-px h-4 bg-terminal-border" />
-        <div className="flex gap-1">
+        <div className="hidden sm:block w-px h-4 bg-terminal-border" />
+        <div className="flex gap-1 flex-wrap">
           {(["ALL", "MAJOR", "HISTORIC", "NOTABLE"] as const).map((f) => (
             <button key={f} onClick={() => setFilterSig(f as typeof filterSig)} className={`text-[9px] px-2 py-1 rounded border font-bold tracking-wider transition-colors ${filterSig === f ? "border-terminal-amber text-terminal-amber bg-terminal-amber/10" : "border-terminal-border text-terminal-text-dim"}`}>{f}</button>
           ))}
         </div>
-        <div className="ml-auto text-[9px] text-terminal-text-dim">
+        <div className="ml-auto text-[9px] text-terminal-text-dim hidden sm:block">
           All values in <span className="text-terminal-green font-bold">{selectedCurrency}</span>
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Bar chart with converted values */}
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+        <div className={`flex-1 flex flex-col overflow-hidden ${showDetail ? "hidden md:flex" : "flex"}`}>
+          {/* Bar chart */}
           <div className="h-32 flex-shrink-0 px-3 py-2 border-b border-terminal-border">
-            <div className="text-[9px] text-terminal-text-dim uppercase tracking-wider mb-1">
-              NET FLOW BY INSTITUTION — TOP 8 · {selectedCurrency}
-            </div>
+            <div className="text-[9px] text-terminal-text-dim uppercase tracking-wider mb-1">NET FLOW BY INSTITUTION — TOP 8 · {selectedCurrency}</div>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={institutionChart} margin={{ top: 0, right: 0, bottom: 0, left: -10 }}>
                 <XAxis dataKey="name" tick={{ fill: "#5a7a8a", fontSize: 8 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: "#5a7a8a", fontSize: 8 }} axisLine={false} tickLine={false} tickFormatter={chartTickFmt} />
-                <Tooltip
-                  contentStyle={{ background: "#050d14", border: "1px solid #0f2535", fontSize: 10, color: "#c8d8e8" }}
-                  formatter={(v: number) => [chartTickFmt(v), `Net (${selectedCurrency})`]}
-                />
+                <Tooltip contentStyle={{ background: "#050d14", border: "1px solid #0f2535", fontSize: 10, color: "#c8d8e8" }} formatter={(v: number) => [chartTickFmt(v), `Net (${selectedCurrency})`]} />
                 <Bar dataKey="value" radius={[2, 2, 0, 0]}>
                   {institutionChart.map((entry, i) => (
                     <Cell key={i} fill={entry.value >= 0 ? "#00ff88" : "#ff3366"} opacity={0.8} />
@@ -134,44 +134,50 @@ export default function MoneyFlowPage() {
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            <table className="w-full text-[10px]">
-              <thead className="sticky top-0 bg-terminal-panel border-b border-terminal-border">
-                <tr className="text-terminal-text-dim text-[9px] uppercase tracking-wider">
-                  <th className="px-3 py-2 text-left">TIME</th>
-                  <th className="px-3 py-2 text-left">INSTITUTION</th>
-                  <th className="px-3 py-2 text-center">ACTION</th>
-                  <th className="px-3 py-2 text-left">ASSET</th>
-                  <th className="px-3 py-2 text-left">TYPE</th>
-                  <th className="px-3 py-2 text-right">VALUE ({selectedCurrency})</th>
-                  <th className="px-3 py-2 text-center">SIGNIFICANCE</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-terminal-border/30">
-                {filtered.map((m) => (
-                  <tr key={m.id} onClick={() => setSelected(m)} className={`data-row cursor-pointer ${selected?.id === m.id ? "bg-terminal-green/10" : ""}`}>
-                    <td className="px-3 py-2 text-terminal-text-dim whitespace-nowrap">{timeAgo(m.timestamp)}</td>
-                    <td className="px-3 py-2 font-bold text-terminal-text">{m.institution}</td>
-                    <td className="px-3 py-2 text-center">
-                      <span className={`text-[9px] border px-1.5 py-0.5 rounded font-bold ${TYPE_COLORS[m.type] || "text-terminal-text-dim border-terminal-border"}`}>{m.type}</span>
-                    </td>
-                    <td className="px-3 py-2 text-terminal-text max-w-[200px] truncate">{m.asset}</td>
-                    <td className="px-3 py-2 text-terminal-text-dim">{m.assetType}</td>
-                    <td className={`px-3 py-2 text-right font-bold ${isBuy(m.type) ? "text-terminal-green" : "text-terminal-red"}`}>
-                      {isBuy(m.type) ? "+" : "-"}{fmt(m.valueMn)}
-                    </td>
-                    <td className={`px-3 py-2 text-center font-bold text-[9px] ${SIG_COLORS[m.significance]}`}>{m.significance}</td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-[10px] min-w-[500px]">
+                <thead className="sticky top-0 bg-terminal-panel border-b border-terminal-border">
+                  <tr className="text-terminal-text-dim text-[9px] uppercase tracking-wider">
+                    <th className="px-3 py-2 text-left">TIME</th>
+                    <th className="px-3 py-2 text-left">INSTITUTION</th>
+                    <th className="px-3 py-2 text-center">ACTION</th>
+                    <th className="px-3 py-2 text-left hidden sm:table-cell">ASSET</th>
+                    <th className="px-3 py-2 text-right">VALUE ({selectedCurrency})</th>
+                    <th className="px-3 py-2 text-center hidden md:table-cell">SIG.</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-terminal-border/30">
+                  {filtered.map((m) => (
+                    <tr key={m.id} onClick={() => handleSelect(m)} className={`data-row cursor-pointer ${selected?.id === m.id ? "bg-terminal-green/10" : ""}`}>
+                      <td className="px-3 py-2 text-terminal-text-dim whitespace-nowrap">{timeAgo(m.timestamp)}</td>
+                      <td className="px-3 py-2 font-bold text-terminal-text">{m.institution}</td>
+                      <td className="px-3 py-2 text-center">
+                        <span className={`text-[9px] border px-1.5 py-0.5 rounded font-bold ${TYPE_COLORS[m.type] || "text-terminal-text-dim border-terminal-border"}`}>{m.type}</span>
+                      </td>
+                      <td className="px-3 py-2 text-terminal-text max-w-[160px] truncate hidden sm:table-cell">{m.asset}</td>
+                      <td className={`px-3 py-2 text-right font-bold whitespace-nowrap ${isBuy(m.type) ? "text-terminal-green" : "text-terminal-red"}`}>
+                        {isBuy(m.type) ? "+" : "-"}{fmt(m.valueMn)}
+                      </td>
+                      <td className={`px-3 py-2 text-center font-bold text-[9px] hidden md:table-cell ${SIG_COLORS[m.significance]}`}>{m.significance}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
+        {/* Detail panel */}
         {selected && (
-          <div className="w-72 flex-shrink-0 border-l border-terminal-border bg-terminal-panel overflow-y-auto">
+          <div className={`w-full md:w-72 flex-shrink-0 border-t md:border-t-0 md:border-l border-terminal-border bg-terminal-panel overflow-y-auto ${!showDetail ? "hidden md:block" : "block"}`}>
             <div className="terminal-header flex items-center justify-between">
               <span>MOVE DETAIL</span>
-              <button onClick={() => setSelected(null)} className="text-terminal-text-dim hover:text-terminal-red text-xs">✕</button>
+              <button onClick={() => { setSelected(null); setShowDetail(false); }} className="text-terminal-text-dim hover:text-terminal-red text-xs">✕</button>
+            </div>
+            <div className="md:hidden px-3 pt-2">
+              <button onClick={() => setShowDetail(false)} className="flex items-center gap-1 text-[9px] text-terminal-text-dim hover:text-terminal-green">
+                <ChevronLeft className="w-3 h-3" /> Back to list
+              </button>
             </div>
             <div className="p-3 space-y-3">
               <div>

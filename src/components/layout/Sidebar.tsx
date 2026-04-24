@@ -3,16 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
 import {
-  Globe,
-  TrendingUp,
-  Pickaxe,
-  Swords,
-  Vote,
-  DollarSign,
-  Eye,
-  Brain,
-  Activity,
-  Radio,
+  Globe, TrendingUp, Pickaxe, Swords, Vote, DollarSign, Eye, Brain, Activity, Radio, X,
 } from "lucide-react";
 
 const navItems = [
@@ -26,22 +17,45 @@ const navItems = [
   { href: "/predictions", label: "AI PREDICTIONS", icon: Brain, abbr: "AIP" },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="w-[200px] flex-shrink-0 bg-terminal-panel border-r border-terminal-border flex flex-col">
-      <div className="px-3 py-3 border-b border-terminal-border">
-        <div className="flex items-center gap-2">
-          <Radio className="w-4 h-4 text-terminal-red animate-pulse" />
-          <span className="text-terminal-green font-bold text-xs tracking-widest glow-green">
-            WORLD TERMINAL
-          </span>
+    <aside
+      className={clsx(
+        "flex-shrink-0 bg-terminal-panel border-r border-terminal-border flex flex-col z-40 transition-transform duration-200",
+        // Mobile: fixed drawer sliding in from left
+        "fixed top-0 left-0 h-full w-[220px]",
+        isOpen ? "translate-x-0" : "-translate-x-full",
+        // Desktop: always visible as part of normal flow
+        "md:relative md:translate-x-0 md:w-[200px] md:h-auto"
+      )}
+    >
+      <div className="px-3 py-3 border-b border-terminal-border flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <Radio className="w-4 h-4 text-terminal-red animate-pulse" />
+            <span className="text-terminal-green font-bold text-xs tracking-widest glow-green">
+              WORLD TERMINAL
+            </span>
+          </div>
+          <div className="text-terminal-text-dim text-[10px] mt-1 flex items-center gap-1">
+            <Activity className="w-3 h-3 text-terminal-green" />
+            LIVE · GLOBAL INTEL v2.0
+          </div>
         </div>
-        <div className="text-terminal-text-dim text-[10px] mt-1 flex items-center gap-1">
-          <Activity className="w-3 h-3 text-terminal-green" />
-          LIVE · GLOBAL INTEL v2.0
-        </div>
+        <button
+          onClick={onClose}
+          className="md:hidden text-terminal-text-dim hover:text-terminal-red transition-colors p-1"
+          aria-label="Close menu"
+        >
+          <X className="w-4 h-4" />
+        </button>
       </div>
 
       <nav className="flex-1 py-2 overflow-y-auto">
@@ -52,6 +66,7 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onClose}
               className={clsx(
                 "flex items-center gap-2 px-3 py-2 text-[11px] font-medium transition-all duration-150 group relative",
                 active
@@ -59,19 +74,12 @@ export default function Sidebar() {
                   : "text-terminal-text-dim hover:text-terminal-text hover:bg-white/5"
               )}
             >
-              <span
-                className={clsx(
-                  "text-[9px] font-bold w-7 text-center shrink-0",
-                  active ? "text-terminal-green/70" : "text-terminal-text-muted"
-                )}
-              >
+              <span className={clsx("text-[9px] font-bold w-7 text-center shrink-0", active ? "text-terminal-green/70" : "text-terminal-text-muted")}>
                 {item.abbr}
               </span>
               <Icon className={clsx("w-3.5 h-3.5 shrink-0", active ? "text-terminal-green" : "text-terminal-text-dim")} />
               <span className="truncate text-[10px] tracking-wide">{item.label}</span>
-              {active && (
-                <span className="absolute left-0 top-0 bottom-0 w-0.5 bg-terminal-green" />
-              )}
+              {active && <span className="absolute left-0 top-0 bottom-0 w-0.5 bg-terminal-green" />}
             </Link>
           );
         })}
@@ -79,22 +87,10 @@ export default function Sidebar() {
 
       <div className="px-3 py-3 border-t border-terminal-border">
         <div className="text-[9px] text-terminal-text-muted space-y-1">
-          <div className="flex justify-between">
-            <span>DATA FEED</span>
-            <span className="text-terminal-green">LIVE</span>
-          </div>
-          <div className="flex justify-between">
-            <span>LATENCY</span>
-            <span className="text-terminal-green">12ms</span>
-          </div>
-          <div className="flex justify-between">
-            <span>SOURCES</span>
-            <span className="text-terminal-amber">847</span>
-          </div>
-          <div className="flex justify-between">
-            <span>AI MODEL</span>
-            <span className="text-terminal-blue">GPT-5 PRO</span>
-          </div>
+          <div className="flex justify-between"><span>DATA FEED</span><span className="text-terminal-green">LIVE</span></div>
+          <div className="flex justify-between"><span>LATENCY</span><span className="text-terminal-green">12ms</span></div>
+          <div className="flex justify-between"><span>SOURCES</span><span className="text-terminal-amber">847</span></div>
+          <div className="flex justify-between"><span>AI MODEL</span><span className="text-terminal-blue">GPT-5 PRO</span></div>
         </div>
       </div>
     </aside>

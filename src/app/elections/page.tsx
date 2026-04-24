@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Vote, Calendar, Globe, TrendingUp, AlertTriangle } from "lucide-react";
+import { Vote, Calendar, Globe, AlertTriangle, ChevronLeft } from "lucide-react";
 import { electionsData } from "@/lib/mockData";
 import { Election } from "@/types";
 import { riskBg } from "@/lib/utils";
@@ -16,19 +16,25 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function ElectionsPage() {
-  const [selected, setSelected] = useState<Election | null>(electionsData[0]);
+  const [selected, setSelected] = useState<Election | null>(null);
   const [filterStatus, setFilterStatus] = useState<"ALL" | Election["status"]>("ALL");
+  const [showDetail, setShowDetail] = useState(false);
 
   const filtered = filterStatus === "ALL" ? electionsData : electionsData.filter((e) => e.status === filterStatus);
   const upcoming = electionsData.filter((e) => e.status === "UPCOMING").length;
   const ongoing = electionsData.filter((e) => e.status === "ONGOING").length;
   const critical = electionsData.filter((e) => e.geopoliticalImpact === "CRITICAL").length;
 
+  const handleSelect = (e: Election) => {
+    setSelected(e);
+    setShowDetail(true);
+  };
+
   return (
     <div className="flex flex-col h-full">
       <SectionHeader title="Global Election Watch" subtitle="Upcoming elections · Polling data · Geopolitical impact assessment · Predictions" icon={Vote} count={electionsData.length} />
 
-      <div className="grid grid-cols-5 gap-2 p-3 border-b border-terminal-border flex-shrink-0">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 p-3 border-b border-terminal-border flex-shrink-0">
         <StatCard label="Upcoming" value={upcoming} color="blue" icon={Calendar} />
         <StatCard label="Ongoing" value={ongoing} color="green" icon={Vote} />
         <StatCard label="Critical Impact" value={critical} color="red" icon={AlertTriangle} />
@@ -36,15 +42,13 @@ export default function ElectionsPage() {
         <StatCard label="Avg. Turnout Exp." value={`${Math.round(electionsData.filter((e) => e.turnoutExpected).reduce((s, e) => s + (e.turnoutExpected || 0), 0) / electionsData.filter((e) => e.turnoutExpected).length)}%`} color="purple" />
       </div>
 
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-terminal-border flex-shrink-0">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-terminal-border flex-shrink-0 flex-wrap">
         {(["ALL", "UPCOMING", "ONGOING", "COMPLETED"] as const).map((f) => (
           <button
             key={f}
             onClick={() => setFilterStatus(f)}
             className={`text-[9px] px-2 py-1 rounded border font-bold tracking-wider transition-colors ${
-              filterStatus === f
-                ? "border-terminal-blue text-terminal-blue bg-terminal-blue/10"
-                : "border-terminal-border text-terminal-text-dim hover:border-terminal-blue/50"
+              filterStatus === f ? "border-terminal-blue text-terminal-blue bg-terminal-blue/10" : "border-terminal-border text-terminal-text-dim hover:border-terminal-blue/50"
             }`}
           >
             {f}
@@ -52,12 +56,13 @@ export default function ElectionsPage() {
         ))}
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        <div className="w-72 flex-shrink-0 border-r border-terminal-border overflow-y-auto">
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+        {/* List */}
+        <div className={`w-full md:w-72 flex-shrink-0 border-b md:border-b-0 md:border-r border-terminal-border overflow-y-auto ${showDetail ? "hidden md:block" : "block"}`}>
           {filtered.map((e) => (
             <div
               key={e.id}
-              onClick={() => setSelected(e)}
+              onClick={() => handleSelect(e)}
               className={`px-3 py-2.5 border-b border-terminal-border/40 cursor-pointer hover:bg-white/5 transition-colors ${selected?.id === e.id ? "bg-terminal-blue/10 border-l-2 border-l-terminal-blue" : ""}`}
             >
               <div className="flex items-center justify-between mb-1">
@@ -75,18 +80,22 @@ export default function ElectionsPage() {
           ))}
         </div>
 
+        {/* Detail */}
         {selected && (
-          <div className="flex-1 overflow-y-auto">
+          <div className={`flex-1 overflow-y-auto ${!showDetail ? "hidden md:block" : "block"}`}>
             <div className="p-4 space-y-4">
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
+                  <button onClick={() => setShowDetail(false)} className="md:hidden flex items-center gap-1 text-[9px] text-terminal-text-dim mb-2 hover:text-terminal-green">
+                    <ChevronLeft className="w-3 h-3" /> Back to list
+                  </button>
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className={`text-[9px] border px-2 py-0.5 rounded font-bold ${STATUS_COLORS[selected.status]}`}>{selected.status}</span>
                     <span className={`text-[9px] border px-2 py-0.5 rounded font-bold ${riskBg(selected.geopoliticalImpact)}`}>{selected.geopoliticalImpact} IMPACT</span>
                     <span className="badge-blue text-[8px]">{selected.type}</span>
                   </div>
                   <h2 className="text-terminal-blue text-lg font-bold">{selected.country}</h2>
-                  <div className="text-terminal-text-dim text-[10px] flex items-center gap-1 mt-0.5">
+                  <div className="text-terminal-text-dim text-[10px] flex items-center gap-1 mt-0.5 flex-wrap">
                     <Calendar className="w-3 h-3" /> {selected.date}
                     {selected.turnoutExpected && <> · Expected Turnout: <span className="text-terminal-text">{selected.turnoutExpected}%</span></>}
                   </div>
@@ -94,19 +103,17 @@ export default function ElectionsPage() {
                 <LiveBadge color="blue" label="TRACKING" />
               </div>
 
-              {/* Poll Chart */}
               <div className="terminal-panel border border-terminal-border p-3">
                 <div className="text-[9px] text-terminal-text-dim uppercase tracking-wider mb-3">POLLING DATA</div>
                 <div className="space-y-2">
                   {selected.candidates.map((c, i) => (
                     <div key={c.name} className="space-y-1">
-                      <div className="flex items-center justify-between text-[10px]">
-                        <div className="flex items-center gap-2">
-                          <span className="text-terminal-text-dim w-3">{i + 1}.</span>
-                          <span className="text-terminal-text font-medium">{c.name}</span>
-                          <span className="text-terminal-text-dim text-[9px]">({c.party})</span>
+                      <div className="flex items-center justify-between text-[10px] gap-2">
+                        <div className="flex items-center gap-1 min-w-0">
+                          <span className="text-terminal-text-dim w-3 flex-shrink-0">{i + 1}.</span>
+                          <span className="text-terminal-text font-medium truncate">{c.name}</span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           <span className={`text-[9px] font-bold ${c.change > 0 ? "text-terminal-green" : c.change < 0 ? "text-terminal-red" : "text-terminal-text-dim"}`}>
                             {c.change > 0 ? `▲${c.change}` : c.change < 0 ? `▼${Math.abs(c.change)}` : "—"}
                           </span>
@@ -116,14 +123,7 @@ export default function ElectionsPage() {
                         </div>
                       </div>
                       <div className="h-2 bg-terminal-border/40 rounded overflow-hidden">
-                        <div
-                          className="h-full rounded transition-all duration-700"
-                          style={{
-                            width: `${c.polling}%`,
-                            background: i === 0 ? "#00ff88" : i === 1 ? "#00aaff" : "#ffb300",
-                            boxShadow: `0 0 6px ${i === 0 ? "#00ff88" : i === 1 ? "#00aaff" : "#ffb300"}`,
-                          }}
-                        />
+                        <div className="h-full rounded transition-all duration-700" style={{ width: `${c.polling}%`, background: i === 0 ? "#00ff88" : i === 1 ? "#00aaff" : "#ffb300", boxShadow: `0 0 6px ${i === 0 ? "#00ff88" : i === 1 ? "#00aaff" : "#ffb300"}` }} />
                       </div>
                     </div>
                   ))}
@@ -150,6 +150,12 @@ export default function ElectionsPage() {
                 />
               </div>
             </div>
+          </div>
+        )}
+
+        {!selected && (
+          <div className="hidden md:flex flex-1 items-center justify-center text-terminal-text-dim text-[11px]">
+            Select an election to view details
           </div>
         )}
       </div>

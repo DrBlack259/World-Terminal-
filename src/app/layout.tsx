@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Sidebar from "@/components/layout/Sidebar";
-import Header from "@/components/layout/Header";
-import TickerTape from "@/components/layout/TickerTape";
+import ClientLayout from "@/components/layout/ClientLayout";
 import { CurrencyProvider } from "@/context/CurrencyContext";
 
 export const metadata: Metadata = {
@@ -13,18 +11,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
-      <body className="bg-terminal-bg text-terminal-text font-mono overflow-hidden">
+      <body className="bg-terminal-bg text-terminal-text font-mono">
         <CurrencyProvider>
-          <div className="flex flex-col h-screen">
-            <Header />
-            <TickerTape />
-            <div className="flex flex-1 overflow-hidden">
-              <Sidebar />
-              <main className="flex-1 overflow-hidden flex flex-col">
-                {children}
-              </main>
-            </div>
-          </div>
+          <ClientLayout>{children}</ClientLayout>
         </CurrencyProvider>
       </body>
     </html>

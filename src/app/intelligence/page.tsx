@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Eye, User, Globe, Clock, AlertTriangle, Radio } from "lucide-react";
+import { Eye, User, Globe, Clock, AlertTriangle, Radio, ChevronLeft } from "lucide-react";
 import { intelligenceData } from "@/lib/mockData";
 import { IntelligenceItem } from "@/types";
-import { timeAgo, riskBg } from "@/lib/utils";
+import { timeAgo } from "@/lib/utils";
 import SectionHeader from "@/components/shared/SectionHeader";
 import LiveBadge from "@/components/shared/LiveBadge";
 import StatCard from "@/components/shared/StatCard";
@@ -14,20 +14,17 @@ const SIG_COLORS: Record<string, string> = {
   SENSITIVE: "text-terminal-amber border-terminal-amber/30 bg-terminal-amber/10",
   CRITICAL: "text-terminal-red border-terminal-red/30 bg-terminal-red/10",
 };
-
 const CAT_COLORS: Record<string, string> = {
-  POLITICAL: "text-terminal-blue",
-  BUSINESS: "text-terminal-green",
-  MILITARY: "text-terminal-red",
-  PERSONAL: "text-terminal-purple",
-  DIPLOMATIC: "text-terminal-amber",
+  POLITICAL: "text-terminal-blue", BUSINESS: "text-terminal-green",
+  MILITARY: "text-terminal-red", PERSONAL: "text-terminal-purple", DIPLOMATIC: "text-terminal-amber",
 };
 
 export default function IntelligencePage() {
   const [items, setItems] = useState<IntelligenceItem[]>(intelligenceData);
-  const [selected, setSelected] = useState<IntelligenceItem | null>(intelligenceData[0]);
+  const [selected, setSelected] = useState<IntelligenceItem | null>(null);
   const [filterSig, setFilterSig] = useState<"ALL" | IntelligenceItem["significance"]>("ALL");
   const [filterCat, setFilterCat] = useState<"ALL" | IntelligenceItem["category"]>("ALL");
+  const [showDetail, setShowDetail] = useState(false);
 
   useEffect(() => {
     const people = [
@@ -65,27 +62,30 @@ export default function IntelligencePage() {
   }, []);
 
   const filtered = items.filter((item) => {
-    const sigMatch = filterSig === "ALL" || item.significance === filterSig;
-    const catMatch = filterCat === "ALL" || item.category === filterCat;
-    return sigMatch && catMatch;
+    return (filterSig === "ALL" || item.significance === filterSig) && (filterCat === "ALL" || item.category === filterCat);
   });
 
   const critical = items.filter((i) => i.significance === "CRITICAL").length;
   const sensitive = items.filter((i) => i.significance === "SENSITIVE").length;
   const categories = Array.from(new Set(items.map((i) => i.category)));
 
+  const handleSelect = (item: IntelligenceItem) => {
+    setSelected(item);
+    setShowDetail(true);
+  };
+
   return (
     <div className="flex flex-col h-full">
-      <SectionHeader title="Elite Intelligence Feed" subtitle="World leaders · Billionaires · Military chiefs — private meetings, communications & movements" icon={Eye} count={filtered.length} live />
+      <SectionHeader title="Elite Intelligence Feed" subtitle="World leaders · Billionaires · Military chiefs — private meetings & movements" icon={Eye} count={filtered.length} live />
 
       <div className="flex items-center gap-2 px-3 py-2 bg-terminal-red/5 border-b border-terminal-red/20 flex-shrink-0">
-        <AlertTriangle className="w-3 h-3 text-terminal-red animate-pulse" />
+        <AlertTriangle className="w-3 h-3 text-terminal-red animate-pulse flex-shrink-0" />
         <span className="text-terminal-red text-[9px] font-bold">CLASSIFIED FEED</span>
-        <span className="text-terminal-text-dim text-[9px]">— Sourced from diplomatic cables, financial filings, investigative journalism, and OSINT</span>
+        <span className="text-terminal-text-dim text-[9px] hidden sm:inline">— Sourced from diplomatic cables, financial filings & OSINT</span>
         <LiveBadge color="red" label="SENSITIVE" />
       </div>
 
-      <div className="grid grid-cols-5 gap-2 p-3 border-b border-terminal-border flex-shrink-0">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 p-3 border-b border-terminal-border flex-shrink-0">
         <StatCard label="Critical" value={critical} color="red" icon={AlertTriangle} />
         <StatCard label="Sensitive" value={sensitive} color="amber" />
         <StatCard label="Total Tracked" value={items.length} color="green" />
@@ -93,30 +93,26 @@ export default function IntelligencePage() {
         <StatCard label="Countries" value={new Set(items.map((i) => i.country)).size} color="purple" icon={Globe} />
       </div>
 
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-terminal-border flex-shrink-0">
-        <div className="flex gap-1">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-terminal-border flex-shrink-0 flex-wrap gap-y-1">
+        <div className="flex flex-wrap gap-1">
           {(["ALL", "CRITICAL", "SENSITIVE", "NOTABLE", "ROUTINE"] as const).map((f) => (
-            <button key={f} onClick={() => setFilterSig(f)} className={`text-[9px] px-2 py-1 rounded border font-bold tracking-wider transition-colors ${filterSig === f ? "border-terminal-red text-terminal-red bg-terminal-red/10" : "border-terminal-border text-terminal-text-dim"}`}>
-              {f}
-            </button>
+            <button key={f} onClick={() => setFilterSig(f)} className={`text-[9px] px-2 py-1 rounded border font-bold tracking-wider transition-colors ${filterSig === f ? "border-terminal-red text-terminal-red bg-terminal-red/10" : "border-terminal-border text-terminal-text-dim"}`}>{f}</button>
           ))}
         </div>
-        <div className="w-px h-4 bg-terminal-border" />
-        <div className="flex gap-1">
+        <div className="hidden sm:block w-px h-4 bg-terminal-border" />
+        <div className="flex flex-wrap gap-1">
           {(["ALL", ...categories] as const).map((f) => (
-            <button key={f} onClick={() => setFilterCat(f as typeof filterCat)} className={`text-[9px] px-2 py-1 rounded border font-bold tracking-wider transition-colors ${filterCat === f ? "border-terminal-cyan text-terminal-cyan bg-terminal-cyan/10" : "border-terminal-border text-terminal-text-dim"}`}>
-              {f}
-            </button>
+            <button key={f} onClick={() => setFilterCat(f as typeof filterCat)} className={`text-[9px] px-2 py-1 rounded border font-bold tracking-wider transition-colors ${filterCat === f ? "border-terminal-cyan text-terminal-cyan bg-terminal-cyan/10" : "border-terminal-border text-terminal-text-dim"}`}>{f}</button>
           ))}
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        <div className="w-72 flex-shrink-0 border-r border-terminal-border overflow-y-auto">
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+        <div className={`w-full md:w-72 flex-shrink-0 border-b md:border-b-0 md:border-r border-terminal-border overflow-y-auto ${showDetail ? "hidden md:block" : "block"}`}>
           {filtered.map((item) => (
             <div
               key={item.id}
-              onClick={() => setSelected(item)}
+              onClick={() => handleSelect(item)}
               className={`px-3 py-2.5 border-b border-terminal-border/40 cursor-pointer hover:bg-white/5 transition-colors ${selected?.id === item.id ? "bg-terminal-cyan/5 border-l-2 border-l-terminal-cyan" : ""}`}
             >
               <div className="flex items-center justify-between mb-1">
@@ -131,23 +127,26 @@ export default function IntelligencePage() {
         </div>
 
         {selected && (
-          <div className="flex-1 overflow-y-auto">
+          <div className={`flex-1 overflow-y-auto ${!showDetail ? "hidden md:block" : "block"}`}>
             <div className="p-4 space-y-4">
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="flex items-center gap-2 mb-2">
+                  <button onClick={() => setShowDetail(false)} className="md:hidden flex items-center gap-1 text-[9px] text-terminal-text-dim mb-2 hover:text-terminal-green">
+                    <ChevronLeft className="w-3 h-3" /> Back to list
+                  </button>
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <span className={`text-[9px] border px-2 py-0.5 rounded font-bold ${SIG_COLORS[selected.significance]}`}>{selected.significance}</span>
                     <span className={`text-[9px] font-bold ${CAT_COLORS[selected.category]}`}>{selected.category}</span>
                     <span className="badge-blue text-[8px]">{selected.eventType}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-terminal-cyan" />
+                    <User className="w-4 h-4 text-terminal-cyan flex-shrink-0" />
                     <div>
                       <h2 className={`text-lg font-bold ${CAT_COLORS[selected.category]}`}>{selected.person}</h2>
                       <div className="text-terminal-text-dim text-[10px]">{selected.title}</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 mt-1 text-[9px] text-terminal-text-dim">
+                  <div className="flex items-center gap-2 mt-1 text-[9px] text-terminal-text-dim flex-wrap">
                     <Globe className="w-3 h-3" /> {selected.country}
                     <Clock className="w-3 h-3 ml-2" /> {timeAgo(selected.timestamp)}
                   </div>
@@ -179,6 +178,12 @@ export default function IntelligencePage() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {!selected && (
+          <div className="hidden md:flex flex-1 items-center justify-center text-terminal-text-dim text-[11px]">
+            Select an intelligence item to view details
           </div>
         )}
       </div>

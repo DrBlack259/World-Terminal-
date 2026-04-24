@@ -22,8 +22,6 @@ export default function Dashboard() {
   const criticalConflicts = conflictsData.filter((c) => c.intensity === "CRITICAL").slice(0, 4);
   const criticalIntel = intelligenceData.filter((i) => i.significance === "CRITICAL").slice(0, 4);
   const majorMoves = moneyMovesData.filter((m) => m.significance === "MAJOR").slice(0, 4);
-
-  // Total deal value in selected currency
   const totalDealValueMn = dealsData.reduce((s, d) => s + d.value, 0);
 
   return (
@@ -34,14 +32,14 @@ export default function Dashboard() {
           <span className="text-terminal-green text-xs font-bold tracking-widest">GLOBAL OVERVIEW DASHBOARD</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-[9px] text-terminal-text-dim">AUTO-REFRESH 5s</span>
+          <span className="text-[9px] text-terminal-text-dim hidden sm:inline">AUTO-REFRESH 5s</span>
           <LiveBadge />
         </div>
       </div>
 
       <div className="flex-1 p-3 overflow-y-auto">
         {/* Stat Row */}
-        <div className="grid grid-cols-7 gap-2 mb-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-2 mb-3">
           <StatCard label="Active Deals" value="847" sublabel="global" icon={TrendingUp} color="green" trend="up" trendValue="+12" />
           <StatCard label={`Deal Value (${selectedCurrency})`} value={fmt(totalDealValueMn)} sublabel="tracked" icon={DollarSign} color="green" trend="up" trendValue={`+${fmt(48000)}`} />
           <StatCard label="Active Conflicts" value="43" sublabel="worldwide" icon={Swords} color="red" trend="up" trendValue="+2" />
@@ -52,9 +50,9 @@ export default function Dashboard() {
         </div>
 
         {/* Main Grid */}
-        <div className="grid grid-cols-12 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-2">
           {/* CRITICAL CONFLICTS */}
-          <div className="col-span-4 terminal-panel border border-terminal-border flex flex-col">
+          <div className="md:col-span-1 xl:col-span-4 terminal-panel border border-terminal-border flex flex-col">
             <div className="terminal-header flex items-center justify-between">
               <div className="flex items-center gap-2"><Swords className="w-3 h-3" />CRITICAL CONFLICTS</div>
               <LiveBadge color="red" />
@@ -80,7 +78,7 @@ export default function Dashboard() {
           </div>
 
           {/* HOT DEALS */}
-          <div className="col-span-4 terminal-panel border border-terminal-border flex flex-col">
+          <div className="md:col-span-1 xl:col-span-4 terminal-panel border border-terminal-border flex flex-col">
             <div className="terminal-header flex items-center justify-between">
               <div className="flex items-center gap-2"><TrendingUp className="w-3 h-3" />HOT DEALS</div>
               <span className="text-[9px] text-terminal-text-dim">{selectedCurrency}</span>
@@ -97,8 +95,8 @@ export default function Dashboard() {
                   </div>
                   <div className="text-terminal-text text-[10px] line-clamp-2">{d.title}</div>
                   <div className="flex items-center justify-between mt-1">
-                    <span className="text-terminal-text-dim text-[9px]">{d.parties[0]} · {d.parties[1]}</span>
-                    <span className={`text-[9px] font-bold ${d.status === "COMPLETED" ? "text-terminal-green" : d.status === "PENDING" ? "text-terminal-amber" : "text-terminal-blue"}`}>{d.status}</span>
+                    <span className="text-terminal-text-dim text-[9px] truncate">{d.parties[0]} · {d.parties[1]}</span>
+                    <span className={`text-[9px] font-bold flex-shrink-0 ml-2 ${d.status === "COMPLETED" ? "text-terminal-green" : d.status === "PENDING" ? "text-terminal-amber" : "text-terminal-blue"}`}>{d.status}</span>
                   </div>
                 </div>
               ))}
@@ -107,7 +105,7 @@ export default function Dashboard() {
           </div>
 
           {/* ELITE INTEL */}
-          <div className="col-span-4 terminal-panel border border-terminal-border flex flex-col">
+          <div className="md:col-span-2 xl:col-span-4 terminal-panel border border-terminal-border flex flex-col">
             <div className="terminal-header flex items-center justify-between">
               <div className="flex items-center gap-2"><Eye className="w-3 h-3" />ELITE INTELLIGENCE</div>
               <LiveBadge color="red" label="SENSITIVE" />
@@ -132,7 +130,7 @@ export default function Dashboard() {
           </div>
 
           {/* MONEY FLOW */}
-          <div className="col-span-6 terminal-panel border border-terminal-border flex flex-col">
+          <div className="md:col-span-1 xl:col-span-6 terminal-panel border border-terminal-border flex flex-col">
             <div className="terminal-header flex items-center justify-between">
               <div className="flex items-center gap-2"><DollarSign className="w-3 h-3" />INSTITUTIONAL MONEY FLOW</div>
               <span className="text-[9px] text-terminal-text-dim">{selectedCurrency}</span>
@@ -161,7 +159,7 @@ export default function Dashboard() {
           </div>
 
           {/* OPEN TENDERS */}
-          <div className="col-span-6 terminal-panel border border-terminal-border flex flex-col">
+          <div className="md:col-span-1 xl:col-span-6 terminal-panel border border-terminal-border flex flex-col">
             <div className="terminal-header flex items-center justify-between">
               <div className="flex items-center gap-2"><Pickaxe className="w-3 h-3" />OPEN RESOURCE TENDERS</div>
               <span className="text-[9px] text-terminal-text-dim">{selectedCurrency}</span>
@@ -174,7 +172,6 @@ export default function Dashboard() {
                       <span className="badge-amber text-[8px]">{r.resource}</span>
                       <span className="text-terminal-text-dim text-[9px]">{r.country}</span>
                     </div>
-                    {/* estimatedValueBn is in USD billions = 1000 USD millions */}
                     <span className="text-terminal-amber font-bold text-[10px]">{fmt(r.estimatedValueBn * 1000)}</span>
                   </div>
                   <div className="text-terminal-text text-[10px]">{r.location}</div>

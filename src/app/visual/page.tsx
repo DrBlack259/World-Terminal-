@@ -199,13 +199,12 @@ export default function VisualPage() {
             title={mapMode === "real" ? "Switch to SVG map" : "Switch to real world map"}
             className="w-9 h-9 rounded-full flex flex-col items-center justify-center gap-0.5 flex-shrink-0 transition-all duration-200"
             style={mapMode === "real"
-              ? { background: "#00ffee18", border: "2px solid #00ffee", boxShadow: "0 0 10px #00ffee66" }
-              : { background: "#050d14", border: "2px solid #00aaff88", boxShadow: "0 0 6px #00aaff33" }
+              ? { background: "#ffffff18", border: "2px solid #ffffff", boxShadow: "0 0 10px #ffffff66" }
+              : { background: "#050d14", border: "2px solid #ffffff88", boxShadow: "0 0 6px #ffffff22" }
             }
           >
             <span className="text-sm leading-none select-none">🌍</span>
-            <span className="text-[6px] font-bold leading-none tracking-wider select-none"
-              style={{ color: mapMode === "real" ? "#00ffee" : "#00aaff" }}>
+            <span className="text-[6px] font-bold leading-none tracking-wider select-none" style={{ color: "#ffffff" }}>
               {mapMode === "real" ? "SVG" : "REAL"}
             </span>
           </button>

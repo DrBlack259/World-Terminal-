@@ -121,11 +121,11 @@ export default function RealMapSection({ activeLayers, onMarkerClick, selectedId
     <MapContainer
       center={[20, 10]}
       zoom={2}
-      minZoom={1}
+      minZoom={0}
       maxZoom={18}
       zoomControl={true}
       worldCopyJump={true}
-      style={{ height: "100%", width: "100%", minHeight: 0, background: "#0a1628" }}
+      style={{ height: "100%", width: "100%", minHeight: 0, background: "#00000e" }}
     >
       <FitWorld />
 

@@ -129,9 +129,43 @@ export default function WorldMapSection({activeLayers,onMarkerClick,selectedId}:
           <stop offset="100%" stopColor="#00ff88" stopOpacity="0"/>
         </linearGradient>
         <clipPath id="mc"><rect width="900" height="440"/></clipPath>
+        <clipPath id="globe-clip">
+          <ellipse cx="450" cy="220" rx="440" ry="212"/>
+        </clipPath>
+        <radialGradient id="globe-light" cx="32%" cy="22%" r="70%">
+          <stop offset="0%" stopColor="#1a3a60" stopOpacity="0"/>
+          <stop offset="60%" stopColor="#000820" stopOpacity="0.38"/>
+          <stop offset="100%" stopColor="#000010" stopOpacity="0.85"/>
+        </radialGradient>
+        <radialGradient id="atmos-glow" cx="50%" cy="50%" r="50%">
+          <stop offset="78%" stopColor="transparent"/>
+          <stop offset="90%" stopColor="#1a5aff" stopOpacity="0.2"/>
+          <stop offset="97%" stopColor="#4488ff" stopOpacity="0.42"/>
+          <stop offset="100%" stopColor="#88bbff" stopOpacity="0.1"/>
+        </radialGradient>
+        <filter id="atmos-blur"><feGaussianBlur stdDeviation="9"/></filter>
       </defs>
 
-      <rect width="900" height="440" fill="#020c14"/>
+      {/* ── SPACE BACKGROUND ── */}
+      <rect width="900" height="440" fill="#00000e"/>
+      {Array.from({length:200},(_,i)=>{
+        const a=i*137.508; const r=Math.sqrt(i/200)*445;
+        const x=450+r*Math.cos(a*Math.PI/180); const y=220+r*Math.sin(a*Math.PI/180)*0.495;
+        if(x<0||x>900||y<0||y>440) return null;
+        const sz=i%9===0?1.5:i%3===0?1.0:0.55;
+        const op=0.35+((i*73)%100)/220;
+        return <circle key={i} cx={x} cy={y} r={sz} fill="#ffffff" opacity={op}/>;
+      })}
+      {[[18,12],[885,18],[22,428],[878,422],[55,45],[835,52],[42,385],[858,375],[900,220],[0,220]].map(([x,y],i)=>(
+        <circle key={`cs${i}`} cx={x} cy={y} r={0.9} fill="#aaccff" opacity={0.55}/>
+      ))}
+
+      {/* Atmosphere glow behind globe */}
+      <ellipse cx="450" cy="220" rx="449" ry="221" fill="url(#atmos-glow)" filter="url(#atmos-blur)"/>
+
+      {/* ── GLOBE CONTENT clipped to ellipse ── */}
+      <g clipPath="url(#globe-clip)">
+      <ellipse cx="450" cy="220" rx="440" ry="212" fill="#020c18"/>
       {[55,110,165,220,275,330,385].map(y=><line key={y} x1="0" y1={y} x2="900" y2={y} stroke="#091a28" strokeWidth="0.4" strokeDasharray="3,14"/>)}
       {[90,180,270,360,450,540,630,720,810].map(x=><line key={x} x1={x} y1="0" x2={x} y2="440" stroke="#091a28" strokeWidth="0.4" strokeDasharray="3,14"/>)}
       <line x1="0" y1="220" x2="900" y2="220" stroke="#0f2535" strokeWidth="0.7" strokeDasharray="8,20" opacity="0.7"/>
@@ -262,6 +296,14 @@ export default function WorldMapSection({activeLayers,onMarkerClick,selectedId}:
         <rect x={mousePos[0]+9} y={mousePos[1]-16} width="76" height="13" fill="#020c14" opacity="0.88" rx="1"/>
         <text x={mousePos[0]+12} y={mousePos[1]-6} fontSize="7.5" fill="#00ff88" fontFamily="monospace">{toLat(mousePos[1])}°  {toLng(mousePos[0])}°</text>
       </g>}
+
+      {/* 3D lighting overlay */}
+      <ellipse cx="450" cy="220" rx="440" ry="212" fill="url(#globe-light)" style={{pointerEvents:"none"}}/>
+      </g>{/* end globe-clip */}
+
+      {/* Atmosphere ring on top */}
+      <ellipse cx="450" cy="220" rx="440" ry="212" fill="none" stroke="#2266ff" strokeWidth="5" opacity="0.22"/>
+      <ellipse cx="450" cy="220" rx="441" ry="213" fill="none" stroke="#88aaff" strokeWidth="1.5" opacity="0.12"/>
 
       <text x="12" y="222" fontSize="6.5" fill="#1a3a4a" fontFamily="monospace">── EQUATOR ──</text>
       <text x="12" y="434" fontSize="6" fill="#1a3a4a" fontFamily="monospace">WORLD TERMINAL · LIVE INTELLIGENCE</text>

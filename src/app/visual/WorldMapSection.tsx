@@ -105,7 +105,7 @@ export default function WorldMapSection({activeLayers,onMarkerClick,selectedId}:
 
   return (
     <svg ref={svgRef} viewBox="0 0 900 440" className="w-full h-full"
-      preserveAspectRatio="xMidYMid meet" style={{minHeight:200,cursor:"crosshair"}}
+      preserveAspectRatio="xMidYMid slice" style={{cursor:"crosshair"}}
       onMouseMove={handleMouseMove} onMouseLeave={()=>setMousePos(null)}>
       <defs>
         <filter id="gr"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>

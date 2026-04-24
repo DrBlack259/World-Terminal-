@@ -8,7 +8,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-[100dvh]">
       <Header onMenuToggle={() => setSidebarOpen((o) => !o)} />
       <TickerTape />
       <div className="flex flex-1 overflow-hidden relative">

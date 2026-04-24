@@ -229,9 +229,9 @@ export default function VisualPage() {
       </div>
 
       {/* Map + Live Feed */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden min-h-0">
       {/* Map area */}
-      <div className="flex-1 relative overflow-hidden">
+      <div className="flex-1 relative overflow-hidden min-h-0">
         {mapMode === "real" ? (
           <RealMapSection
             activeLayers={activeLayers}

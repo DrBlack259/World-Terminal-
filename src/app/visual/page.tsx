@@ -193,6 +193,22 @@ export default function VisualPage() {
         </div>
         <div className="ml-auto flex items-center gap-3 text-[9px] text-terminal-text-dim">
           <span className="hidden sm:inline">Click any marker for details</span>
+          {/* REAL / SVG map toggle */}
+          <button
+            onClick={() => setMapMode(m => m === "svg" ? "real" : "svg")}
+            title={mapMode === "real" ? "Switch to SVG map" : "Switch to real world map"}
+            className="w-9 h-9 rounded-full flex flex-col items-center justify-center gap-0.5 flex-shrink-0 transition-all duration-200"
+            style={mapMode === "real"
+              ? { background: "#00ffee18", border: "2px solid #00ffee", boxShadow: "0 0 10px #00ffee66" }
+              : { background: "#050d14", border: "2px solid #00aaff88", boxShadow: "0 0 6px #00aaff33" }
+            }
+          >
+            <span className="text-sm leading-none select-none">🌍</span>
+            <span className="text-[6px] font-bold leading-none tracking-wider select-none"
+              style={{ color: mapMode === "real" ? "#00ffee" : "#00aaff" }}>
+              {mapMode === "real" ? "SVG" : "REAL"}
+            </span>
+          </button>
         </div>
       </div>
 
@@ -211,23 +227,6 @@ export default function VisualPage() {
             selectedId={selected?.data.id ?? null}
           />
         )}
-
-        {/* REAL / SVG toggle — floating circle button on the map */}
-        <button
-          onClick={() => setMapMode(m => m === "svg" ? "real" : "svg")}
-          title={mapMode === "real" ? "Switch to SVG map" : "Switch to real map"}
-          className="absolute top-3 right-3 z-40 w-11 h-11 rounded-full flex flex-col items-center justify-center gap-0.5 transition-all duration-200"
-          style={mapMode === "real"
-            ? { background: "#00ffee18", border: "2px solid #00ffee", boxShadow: "0 0 16px #00ffee88, inset 0 0 8px #00ffee22" }
-            : { background: "#050d14ee", border: "2px solid #00ffee60", boxShadow: "0 0 8px #00ffee33" }
-          }
-        >
-          <span className="text-sm leading-none select-none">🌍</span>
-          <span className="text-[6px] font-bold leading-none tracking-wider select-none"
-            style={{ color: mapMode === "real" ? "#00ffee" : "#00ffeeaa" }}>
-            {mapMode === "real" ? "SVG" : "REAL"}
-          </span>
-        </button>
 
         {/* Detail panel */}
         {selected && (

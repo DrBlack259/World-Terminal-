@@ -66,7 +66,12 @@ export default function WorldMapSection({activeLayers,onMarkerClick,selectedId}:
   const [tick, setTick] = useState(0);
   const [radarAngle, setRadarAngle] = useState(0);
   const [mousePos, setMousePos] = useState<[number,number]|null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [panX, setPanX] = useState(450);
+  const [panY, setPanY] = useState(220);
   const svgRef = useRef<SVGSVGElement>(null);
+  const dragRef = useRef<{x:number;y:number;px:number;py:number}|null>(null);
+  const pinchRef = useRef<number|null>(null);
   const { fmt } = useCurrency();
 
   useEffect(() => {
@@ -94,19 +99,119 @@ export default function WorldMapSection({activeLayers,onMarkerClick,selectedId}:
   const handleMouseMove = (e:React.MouseEvent<SVGSVGElement>) => {
     if (!svgRef.current) return;
     const r = svgRef.current.getBoundingClientRect();
-    setMousePos([
-      Math.round(((e.clientX-r.left)/r.width)*900),
-      Math.round(((e.clientY-r.top)/r.height)*440),
-    ]);
+    const sx = ((e.clientX-r.left)/r.width)*(900/zoom) + vx;
+    const sy = ((e.clientY-r.top)/r.height)*(440/zoom) + vy;
+    setMousePos([Math.round(sx), Math.round(sy)]);
   };
   const toLat = (y:number) => (90-(y/440)*180).toFixed(1);
   const toLng = (x:number) => (-180+(x/900)*360).toFixed(1);
   const criticalCount = conflictsData.filter(c=>c.intensity==="CRITICAL").length;
 
+  const MIN_ZOOM = 1, MAX_ZOOM = 8;
+  const vw = 900 / zoom, vh = 440 / zoom;
+  const vx = Math.max(0, Math.min(900 - vw, panX - vw/2));
+  const vy = Math.max(0, Math.min(440 - vh, panY - vh/2));
+  const viewBox = `${vx} ${vy} ${vw} ${vh}`;
+
+  const clampPan = (px:number, py:number, z:number) => {
+    const hw=450/z, hh=220/z;
+    return [Math.max(hw, Math.min(900-hw, px)), Math.max(hh, Math.min(440-hh, py))] as [number,number];
+  };
+  const doZoom = (factor:number, cx=panX, cy=panY) => {
+    const nz = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom * factor));
+    const [nx,ny] = clampPan(cx, cy, nz);
+    setZoom(nz); setPanX(nx); setPanY(ny);
+  };
+  const resetZoom = () => { setZoom(1); setPanX(450); setPanY(220); };
+
+  const handleWheel = (e:React.WheelEvent) => {
+    e.preventDefault();
+    const r = svgRef.current!.getBoundingClientRect();
+    const mx = ((e.clientX-r.left)/r.width)*900;
+    const my = ((e.clientY-r.top)/r.height)*440;
+    const factor = e.deltaY < 0 ? 1.25 : 0.8;
+    const nx = panX + (mx - panX) * (1 - 1/factor);
+    const ny = panY + (my - panY) * (1 - 1/factor);
+    doZoom(factor, nx, ny);
+  };
+  const handleSvgMouseDown = (e:React.MouseEvent) => {
+    if (e.button !== 0) return;
+    dragRef.current = {x:e.clientX, y:e.clientY, px:panX, py:panY};
+  };
+  const handleSvgMouseMove = (e:React.MouseEvent<SVGSVGElement>) => {
+    handleMouseMove(e);
+    if (!dragRef.current) return;
+    const r = svgRef.current!.getBoundingClientRect();
+    const dx = ((e.clientX-dragRef.current.x)/r.width)*(900/zoom);
+    const dy = ((e.clientY-dragRef.current.y)/r.height)*(440/zoom);
+    const [nx,ny] = clampPan(dragRef.current.px-dx, dragRef.current.py-dy, zoom);
+    setPanX(nx); setPanY(ny);
+  };
+  const handleSvgMouseUp = () => { dragRef.current = null; };
+
+  const handleTouchStart = (e:React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const dx=e.touches[0].clientX-e.touches[1].clientX;
+      const dy=e.touches[0].clientY-e.touches[1].clientY;
+      pinchRef.current = Math.hypot(dx,dy);
+    } else if (e.touches.length === 1) {
+      dragRef.current = {x:e.touches[0].clientX, y:e.touches[0].clientY, px:panX, py:panY};
+    }
+  };
+  const handleTouchMove = (e:React.TouchEvent) => {
+    e.preventDefault();
+    if (e.touches.length === 2 && pinchRef.current !== null) {
+      const dx=e.touches[0].clientX-e.touches[1].clientX;
+      const dy=e.touches[0].clientY-e.touches[1].clientY;
+      const dist = Math.hypot(dx,dy);
+      doZoom(dist/pinchRef.current);
+      pinchRef.current = dist;
+    } else if (e.touches.length === 1 && dragRef.current) {
+      const r = svgRef.current!.getBoundingClientRect();
+      const ddx = ((e.touches[0].clientX-dragRef.current.x)/r.width)*(900/zoom);
+      const ddy = ((e.touches[0].clientY-dragRef.current.y)/r.height)*(440/zoom);
+      const [nx,ny] = clampPan(dragRef.current.px-ddx, dragRef.current.py-ddy, zoom);
+      setPanX(nx); setPanY(ny);
+    }
+  };
+  const handleTouchEnd = () => { dragRef.current = null; pinchRef.current = null; };
+
   return (
-    <svg ref={svgRef} viewBox="0 0 900 440" className="w-full h-full"
-      preserveAspectRatio="xMidYMid slice" style={{cursor:"crosshair"}}
-      onMouseMove={handleMouseMove} onMouseLeave={()=>setMousePos(null)}>
+    <div className="relative w-full h-full">
+    {/* Zoom controls */}
+    <div className="absolute bottom-3 right-3 z-20 flex flex-col gap-1">
+      <button onClick={()=>doZoom(1.5)}
+        className="w-8 h-8 rounded flex items-center justify-center text-base font-bold transition-all select-none"
+        style={{background:"rgba(2,12,20,0.85)",border:"1px solid #00ff8855",color:"#00ff88",boxShadow:"0 0 8px #00ff8822"}}>
+        +
+      </button>
+      <button onClick={()=>doZoom(0.67)}
+        className="w-8 h-8 rounded flex items-center justify-center text-base font-bold transition-all select-none"
+        style={{background:"rgba(2,12,20,0.85)",border:"1px solid #00ff8855",color:"#00ff88",boxShadow:"0 0 8px #00ff8822"}}>
+        −
+      </button>
+      {zoom > 1.05 && (
+        <button onClick={resetZoom}
+          className="w-8 h-8 rounded flex items-center justify-center text-[8px] font-bold transition-all select-none"
+          style={{background:"rgba(2,12,20,0.85)",border:"1px solid #ffffff33",color:"#aabbcc",boxShadow:"0 0 6px #00000055"}}>
+          ⊙
+        </button>
+      )}
+    </div>
+    {/* Zoom level indicator */}
+    {zoom > 1.05 && (
+      <div className="absolute bottom-3 left-3 z-20 text-[8px] font-bold px-2 py-1 rounded select-none"
+        style={{background:"rgba(2,12,20,0.75)",border:"1px solid #00ff8844",color:"#00ff8899"}}>
+        {zoom.toFixed(1)}×
+      </div>
+    )}
+    <svg ref={svgRef} viewBox={viewBox} className="w-full h-full"
+      preserveAspectRatio="xMidYMid slice"
+      style={{cursor: dragRef.current ? "grabbing" : zoom>1?"grab":"crosshair", touchAction:"none"}}
+      onMouseMove={handleSvgMouseMove} onMouseLeave={()=>{setMousePos(null);dragRef.current=null;}}
+      onMouseDown={handleSvgMouseDown} onMouseUp={handleSvgMouseUp}
+      onWheel={handleWheel}
+      onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
       <defs>
         <filter id="gr"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
         <filter id="gr-lg"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
@@ -310,5 +415,6 @@ export default function WorldMapSection({activeLayers,onMarkerClick,selectedId}:
       <text x="888" y="434" fontSize="6" fill="#ff3366" fontFamily="monospace" textAnchor="end" opacity="0.8">{criticalCount} CRITICAL ACTIVE</text>
       <circle cx={rcx} cy={rcy} r="2.5" fill="#00ff88" opacity="0.35" filter="url(#gg)"/>
     </svg>
+    </div>
   );
 }

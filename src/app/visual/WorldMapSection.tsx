@@ -291,7 +291,7 @@ export default function WorldMapSection({activeLayers,onMarkerClick,selectedId}:
         "M658,88 L752,75 L782,98 L778,148 L748,178 L712,182 L672,162 L655,132 Z",
         "M768,108 L785,102 L790,120 L778,132 L765,125 Z",
         "M702,308 L792,295 L828,322 L822,375 L788,398 L742,398 L705,368 L695,335 Z",
-      ].map((d,i)=><path key={i} d={d} fill="#081828" stroke="#0f2535" strokeWidth="0.8"/>)}
+      ].map((d,i)=><path key={i} d={d} fill="#071c2c" stroke="#102840" strokeWidth="0.8"/>)}
 
       {/* Radar */}
       <g clipPath="url(#mc)">
@@ -308,23 +308,34 @@ export default function WorldMapSection({activeLayers,onMarkerClick,selectedId}:
       {activeLayers.has("money") && MONEY_ROUTES.map(([a,b],i)=>{
         const [x1,y1]=FIN[a],[x2,y2]=FIN[b],p=arcPath(x1,y1,x2,y2);
         return <g key={i}>
-          <path d={p} fill="none" stroke="#00ff88" strokeWidth="0.6" opacity="0.18"/>
-          {[0,1,2,3,4].map(o=><circle key={o} r={o===0?2.5:1.5} fill="#00ff88" opacity={o===0?0.95:0.45} filter={o===0?"url(#gg)":undefined}><animateMotion dur={`${3+i*0.5}s`} begin={`${-o*(3+i*0.5)/5}s`} repeatCount="indefinite" path={p}/></circle>)}
+          {/* Dashed green arc */}
+          <path d={p} fill="none" stroke="#00ff88" strokeWidth="1.2" opacity="0.35" strokeDasharray="5,9">
+            <animate attributeName="stroke-dashoffset" from="140" to="0" dur={`${4+i*0.4}s`} repeatCount="indefinite"/>
+          </path>
+          {/* Animated dots */}
+          {[0,1,2,3,4].map(o=><circle key={o} r={o===0?3:1.8} fill="#00ff88" opacity={o===0?0.95:0.5} filter={o===0?"url(#gg)":undefined}>
+            <animateMotion dur={`${3.5+i*0.5}s`} begin={`${-o*(3.5+i*0.5)/5}s`} repeatCount="indefinite" path={p}/>
+          </circle>)}
         </g>;
       })}
       {activeLayers.has("money") && Object.entries(FIN).map(([k,[x,y]])=><g key={k}>
-        <circle cx={x} cy={y} r="8" fill="none" stroke="#00ff88" strokeWidth="0.6" opacity="0.15"><animate attributeName="r" values="6;16;6" dur="3s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.2;0.04;0.2" dur="3s" repeatCount="indefinite"/></circle>
-        <circle cx={x} cy={y} r="2.5" fill="#00ff88" opacity="0.95" filter="url(#gg)"/>
-        <text x={x} y={y+13} fontSize="6" fill="#00ff88" textAnchor="middle" opacity="0.55" fontFamily="monospace">{k}</text>
+        <circle cx={x} cy={y} r="10" fill="none" stroke="#00ff88" strokeWidth="0.8" opacity="0.2">
+          <animate attributeName="r" values="7;18;7" dur="3s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.25;0.04;0.25" dur="3s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx={x} cy={y} r="4" fill="#00ff88" opacity="0.95" filter="url(#gg)"/>
+        <text x={x} y={y+14} fontSize="7" fill="#00ff88" textAnchor="middle" opacity="0.7" fontFamily="monospace" fontWeight="bold">{k}</text>
       </g>)}
 
       {/* Deals */}
       {activeLayers.has("deals") && DEAL_ARCS.map((arc,i)=>{
         const p=arcPath(arc.from[0],arc.from[1],arc.to[0],arc.to[1]);
         return <g key={i}>
-          <path d={p} fill="none" stroke={arc.color} strokeWidth="1.2" opacity="0.2" strokeDasharray="5,7"><animate attributeName="stroke-dashoffset" from="120" to="0" dur={arc.dur} repeatCount="indefinite"/></path>
-          <circle r="2.5" fill={arc.color} opacity="0.95" filter="url(#gb)"><animateMotion dur={arc.dur} repeatCount="indefinite" path={p}/></circle>
-          <circle r="1.2" fill={arc.color} opacity="0.4"><animateMotion dur={arc.dur} begin={`-${parseFloat(arc.dur)*0.12}s`} repeatCount="indefinite" path={p}/></circle>
+          <path d={p} fill="none" stroke={arc.color} strokeWidth="1.4" opacity="0.3" strokeDasharray="6,8">
+            <animate attributeName="stroke-dashoffset" from="140" to="0" dur={arc.dur} repeatCount="indefinite"/>
+          </path>
+          <circle r="3" fill={arc.color} opacity="0.95" filter="url(#gb)"><animateMotion dur={arc.dur} repeatCount="indefinite" path={p}/></circle>
+          <circle r="1.5" fill={arc.color} opacity="0.5"><animateMotion dur={arc.dur} begin={`-${parseFloat(arc.dur)*0.5}s`} repeatCount="indefinite" path={p}/></circle>
         </g>;
       })}
 
@@ -333,10 +344,18 @@ export default function WorldMapSection({activeLayers,onMarkerClick,selectedId}:
         const pos=RESOURCE_POS[r.id];if(!pos)return null;
         const [x,y]=pos,sel=selectedId===r.id;
         return <g key={r.id} onClick={()=>onMarkerClick({type:"resource",data:r})} style={{cursor:"pointer"}}>
-          <circle cx={x} cy={y} r="10" fill="none" stroke="#ffb300" strokeWidth="0.5" opacity="0.15"><animate attributeName="r" values="8;20;8" dur="3s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.2;0.04;0.2" dur="3s" repeatCount="indefinite"/></circle>
-          <circle cx={x} cy={y} r={sel?12:8} fill="none" stroke="#ffb300" strokeWidth={sel?1.5:0.8} opacity={sel?0.9:0.5}/>
-          <circle cx={x} cy={y} r={sel?5:3} fill="#ffb300" opacity="0.95" filter="url(#ga)"/>
-          <text x={x} y={y-11} fontSize="6.5" fill="#ffb300" textAnchor="middle" opacity="0.8" fontFamily="monospace">{r.resource.slice(0,7)}</text>
+          {/* Static rings */}
+          <circle cx={x} cy={y} r={sel?22:16} fill="none" stroke="#ffb300" strokeWidth="1" opacity="0.45"/>
+          <circle cx={x} cy={y} r={sel?14:10} fill="none" stroke="#ffb300" strokeWidth="0.8" opacity="0.65"/>
+          {/* Pulse ring */}
+          <circle cx={x} cy={y} r="8" fill="none" stroke="#ffb300" strokeWidth="1">
+            <animate attributeName="r" values="6;26;6" dur="3.5s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.4;0;0.4" dur="3.5s" repeatCount="indefinite"/>
+          </circle>
+          {sel&&<circle cx={x} cy={y} r="28" fill="none" stroke="#ffb300" strokeWidth="1.2" opacity="0.5"/>}
+          <circle cx={x} cy={y} r={sel?6:4.5} fill="#ffb300" opacity="0.95" filter="url(#ga)"/>
+          {/* Resource label above */}
+          <text x={x} y={y-(sel?30:24)} fontSize="8" fill="#ffb300" textAnchor="middle" opacity="0.95" fontFamily="monospace" fontWeight="bold">{r.resource.slice(0,8)}</text>
         </g>;
       })}
 
@@ -344,11 +363,16 @@ export default function WorldMapSection({activeLayers,onMarkerClick,selectedId}:
       {activeLayers.has("elections") && electionsData.map((e,ei)=>{
         const pos=ELECTION_POS[e.id];if(!pos)return null;
         const [x,y]=pos,sel=selectedId===e.id;
-        const pulse=Math.sin((tick*0.03+ei*1.1)%(Math.PI*2))*0.35+0.65;
+        const pulse=Math.sin((tick*0.03+ei*1.1)%(Math.PI*2))*0.3+0.7;
+        const ts=sel?8:6, th=sel?14:10;
         return <g key={e.id} onClick={()=>onMarkerClick({type:"election",data:e})} style={{cursor:"pointer"}}>
-          <circle cx={x} cy={y} r={sel?13:8} fill="none" stroke="#00aaff" strokeWidth="0.6" opacity={pulse*0.35}/>
-          <polygon points={`${x},${y-(sel?9:6)} ${x+(sel?5:3.5)},${y+(sel?4:3)} ${x-(sel?5:3.5)},${y+(sel?4:3)}`} fill="#00aaff" opacity={sel?1:pulse*0.85} filter="url(#gb)"/>
-          <text x={x} y={y-13} fontSize="6.5" fill="#00aaff" textAnchor="middle" opacity="0.85" fontFamily="monospace">{e.country.slice(0,8)}</text>
+          {/* Outer halo */}
+          <circle cx={x} cy={y} r={sel?16:11} fill="none" stroke="#00ccff" strokeWidth="0.7" opacity={pulse*0.3}/>
+          <circle cx={x} cy={y} r={sel?10:7} fill="none" stroke="#00ccff" strokeWidth="0.6" opacity={pulse*0.45}/>
+          {/* Triangle */}
+          <polygon points={`${x},${y-th} ${x+ts},${y+ts*0.6} ${x-ts},${y+ts*0.6}`} fill="#00ccff" opacity={sel?1:pulse*0.9} filter="url(#gb)"/>
+          {sel&&<polygon points={`${x},${y-th-5} ${x+ts+3},${y+ts*0.6+3} ${x-ts-3},${y+ts*0.6+3}`} fill="none" stroke="#00ccff" strokeWidth="1" opacity="0.5"/>}
+          <text x={x} y={y+th+10} fontSize="7.5" fill="#00ccff" textAnchor="middle" opacity="0.9" fontFamily="monospace">{e.country.slice(0,8)}</text>
         </g>;
       })}
 
@@ -357,11 +381,20 @@ export default function WorldMapSection({activeLayers,onMarkerClick,selectedId}:
         const pos=INTEL_POS[item.id];if(!pos)return null;
         const [x,y]=pos,sel=selectedId===item.id,isCrit=item.significance==="CRITICAL";
         const spin=(tick*1.8+ii*28)%360;
+        const ds=isCrit?7:5.5;
         return <g key={item.id} onClick={()=>onMarkerClick({type:"intel",data:item})} style={{cursor:"pointer"}}>
-          {isCrit&&<circle cx={x} cy={y} r="9" fill="none" stroke="#bb77ff" strokeWidth="0.7" opacity="0.4"><animate attributeName="r" values="7;18;7" dur="2.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.5;0;0.5" dur="2.2s" repeatCount="indefinite"/></circle>}
-          {sel&&<circle cx={x} cy={y} r={15} fill="none" stroke="#bb77ff" strokeWidth="1" opacity="0.55"/>}
-          <rect x={x-4.5} y={y-4.5} width={9} height={9} fill="#bb77ff" opacity={isCrit?1:0.75} transform={`rotate(${spin},${x},${y})`} filter="url(#gp)"/>
-          <text x={x} y={y-11} fontSize="6" fill="#bb77ff" textAnchor="middle" opacity="0.85" fontFamily="monospace">{item.person.split(" ").pop()?.slice(0,7)}</text>
+          {/* Pulse ring for critical */}
+          {isCrit&&<circle cx={x} cy={y} r="8" fill="none" stroke="#cc88ff" strokeWidth="0.9" opacity="0.4">
+            <animate attributeName="r" values="6;22;6" dur="2.2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.55;0;0.55" dur="2.2s" repeatCount="indefinite"/>
+          </circle>}
+          {/* Static outer diamond ring */}
+          <rect x={x-(ds+4)} y={y-(ds+4)} width={(ds+4)*2} height={(ds+4)*2} fill="none" stroke="#bb77ff" strokeWidth="0.6" opacity="0.3" transform={`rotate(45,${x},${y})`}/>
+          {sel&&<rect x={x-(ds+8)} y={y-(ds+8)} width={(ds+8)*2} height={(ds+8)*2} fill="none" stroke="#bb77ff" strokeWidth="1" opacity="0.5" transform={`rotate(45,${x},${y})`}/>}
+          {/* Spinning filled diamond */}
+          <rect x={x-ds} y={y-ds} width={ds*2} height={ds*2} fill="#bb77ff" opacity={isCrit?1:0.8} transform={`rotate(${spin},${x},${y})`} filter="url(#gp)"/>
+          {/* Person name label */}
+          <text x={x} y={y-(ds+8)} fontSize="7" fill="#cc88ff" textAnchor="middle" opacity="0.95" fontFamily="monospace" fontWeight="bold">{item.person.split(" ").pop()?.slice(0,8)}</text>
         </g>;
       })}
 
@@ -371,16 +404,22 @@ export default function WorldMapSection({activeLayers,onMarkerClick,selectedId}:
         const [x,y]=pos,color=INTENSITY_COLOR[c.intensity],sel=selectedId===c.id;
         const isCrit=c.intensity==="CRITICAL",isHigh=c.intensity==="HIGH";
         const ps=isCrit?1.6:isHigh?2.2:3;
+        const baseR=isCrit?8:isHigh?6:5;
+        const rings=isCrit?[16,26,38]:isHigh?[13,21,30]:[10,17,24];
         return <g key={c.id} onClick={()=>onMarkerClick({type:"conflict",data:c})} style={{cursor:"pointer"}}>
-          {[0,ps/3,(ps/3)*2].map((delay,di)=><circle key={di} cx={x} cy={y} r="5" fill="none" stroke={color} strokeWidth={isCrit?1.2:0.8}>
-            <animate attributeName="r" values={`5;${isCrit?42:isHigh?32:24};5`} dur={`${ps}s`} begin={`${delay}s`} repeatCount="indefinite"/>
-            <animate attributeName="opacity" values="0.75;0;0.75" dur={`${ps}s`} begin={`${delay}s`} repeatCount="indefinite"/>
+          {/* Static concentric rings */}
+          {rings.map((r,ri)=><circle key={`sr${ri}`} cx={x} cy={y} r={r} fill="none" stroke={color} strokeWidth={ri===0?1.4:0.8} opacity={[0.55,0.3,0.15][ri]}/>)}
+          {/* Pulse rings */}
+          {[0,ps/3,(ps/3)*2].map((delay,di)=><circle key={`pr${di}`} cx={x} cy={y} r="5" fill="none" stroke={color} strokeWidth={isCrit?1.5:1}>
+            <animate attributeName="r" values={`${baseR};${isCrit?50:isHigh?38:28};${baseR}`} dur={`${ps}s`} begin={`${delay}s`} repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.7;0;0.7" dur={`${ps}s`} begin={`${delay}s`} repeatCount="indefinite"/>
           </circle>)}
-          <circle cx={x} cy={y} r={sel?22:16} fill="none" stroke={color} strokeWidth="0.6" opacity="0.18"/>
-          <circle cx={x} cy={y} r={sel?13:9} fill="none" stroke={color} strokeWidth={sel?1.8:1.1} opacity="0.6"/>
-          {sel&&<circle cx={x} cy={y} r={28} fill="none" stroke={color} strokeWidth="1.2" opacity="0.5"/>}
-          <circle cx={x} cy={y} r={sel?9:6} fill={color} opacity="0.95" filter={isCrit?"url(#gr-lg)":"url(#gr)"}/>
-          <text x={x} y={y-16} fontSize="7.5" fill={color} textAnchor="middle" opacity="0.95" fontFamily="monospace" fontWeight="bold">{c.country.split("/")[0].trim().slice(0,9)}</text>
+          {sel&&<circle cx={x} cy={y} r={rings[2]+10} fill="none" stroke={color} strokeWidth="1.5" opacity="0.6"/>}
+          {/* Center glow fill */}
+          <circle cx={x} cy={y} r={baseR+4} fill={color} opacity="0.12"/>
+          <circle cx={x} cy={y} r={sel?baseR+3:baseR} fill={color} opacity="0.95" filter={isCrit?"url(#gr-lg)":"url(#gr)"}/>
+          {/* Bold country label */}
+          <text x={x} y={y-rings[2]-5} fontSize={isCrit?"10":"8.5"} fill={color} textAnchor="middle" opacity="0.98" fontFamily="monospace" fontWeight="bold" style={{textShadow:`0 0 6px ${color}`}}>{c.country.split("/")[0].trim().slice(0,9)}</text>
         </g>;
       })}
 

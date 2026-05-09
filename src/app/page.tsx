@@ -26,7 +26,7 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
-      <div className="flex-shrink-0 px-4 py-2 border-b border-terminal-border bg-terminal-panel flex items-center justify-between">
+      <div className="flex-shrink-0 px-4 py-3 border-b border-terminal-border terminal-surface rounded-none border-x-0 border-t-0 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Globe className="w-4 h-4 text-terminal-green" />
           <span className="text-terminal-green text-xs font-bold tracking-widest">GLOBAL OVERVIEW DASHBOARD</span>
@@ -37,7 +37,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="flex-1 p-3 overflow-y-auto">
+      <div className="flex-1 p-3 sm:p-4 overflow-y-auto">
         {/* Stat Row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-2 mb-3">
           <StatCard label="Active Deals" value="847" sublabel="global" icon={TrendingUp} color="green" trend="up" trendValue="+12" />

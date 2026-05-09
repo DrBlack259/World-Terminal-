@@ -55,11 +55,11 @@ export default function Header({ onMenuToggle }: HeaderProps) {
   );
 
   return (
-    <header className="h-10 flex-shrink-0 bg-terminal-panel border-b border-terminal-border flex items-center px-2 sm:px-4 gap-2 sm:gap-4 relative z-50">
+    <header className="h-12 flex-shrink-0 terminal-surface border-x-0 border-t-0 rounded-none flex items-center px-2 sm:px-4 gap-2 sm:gap-4 relative z-50">
       {/* Hamburger — mobile only */}
       <button
         onClick={onMenuToggle}
-        className="md:hidden flex-shrink-0 text-terminal-text-dim hover:text-terminal-green transition-colors"
+        className="md:hidden flex-shrink-0 text-terminal-text-dim hover:text-terminal-green transition-colors p-1.5 rounded-md hover:bg-terminal-green/10"
         aria-label="Open menu"
       >
         <Menu className="w-4 h-4" />
@@ -111,7 +111,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
         <div ref={dropdownRef} className="relative">
           <button
             onClick={() => { setOpen((o) => !o); setSearch(""); }}
-            className="flex items-center gap-1 sm:gap-1.5 bg-terminal-bg border border-terminal-border rounded px-2 py-1 text-[10px] hover:border-terminal-green/50 transition-colors"
+            className="flex items-center gap-1 sm:gap-1.5 bg-terminal-bg/80 border border-terminal-border rounded-md px-2 py-1.5 text-[10px] hover:border-terminal-green/50 transition-colors"
           >
             <span className="text-base leading-none">{info.flag}</span>
             <span className="text-terminal-green font-bold tracking-wider">{info.code}</span>

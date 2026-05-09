@@ -29,7 +29,7 @@ body {
   color: var(--terminal-text);
   font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
   font-size: 13px;
-  overflow: hidden;
+  overflow-x: hidden;
   height: 100vh;
 }
 
@@ -59,8 +59,12 @@ main {
 
 @layer components {
   .terminal-panel {
-    @apply bg-terminal-panel border border-terminal-border rounded;
+    @apply bg-terminal-panel border border-terminal-border rounded-lg;
     box-shadow: inset 0 1px 0 rgba(0, 255, 136, 0.04), 0 4px 24px rgba(0, 0, 0, 0.6);
+  }
+
+  .terminal-surface {
+    @apply bg-terminal-panel/85 border border-terminal-border/80 rounded-lg backdrop-blur-sm;
   }
 
   .terminal-header {
@@ -115,6 +119,13 @@ main {
   .glow-amber {
     text-shadow: 0 0 8px rgba(255, 179, 0, 0.6);
   }
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid rgba(0, 255, 136, 0.55);
+  outline-offset: 2px;
 }
 
 /* Leaflet satellite map theme */

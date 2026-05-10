@@ -28,7 +28,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   return (
     <aside
       className={clsx(
-        "flex-shrink-0 terminal-surface rounded-none border-l-0 border-y-0 border-r border-terminal-border/60 flex flex-col z-40 transition-transform duration-200 shadow-[0_12px_40px_rgba(2,7,18,0.45)]",
+"flex-shrink-0 terminal-surface rounded-none border-l-0 border-y-0 border-r border-terminal-border/60 flex flex-col z-40 transition-transform duration-200 shadow-[0_12px_40px_rgba(2,7,18,0.45)]", main
         // Mobile: fixed drawer sliding in from left
         "fixed top-0 left-0 h-full w-[240px]",
         isOpen ? "translate-x-0" : "-translate-x-full",
@@ -68,10 +68,10 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
               href={item.href}
               onClick={onClose}
               className={clsx(
-                "flex items-center gap-2 px-3 py-2 text-[11px] font-medium transition-all duration-150 group relative",
+                "flex items-center gap-2.5 px-3 py-2.5 text-[11px] font-medium transition-all duration-150 group relative rounded-r-md mx-1",
                 active
                   ? "bg-terminal-green/10 text-terminal-green border-r-2 border-terminal-green"
-                  : "text-terminal-text-dim hover:text-terminal-text hover:bg-white/5"
+                  : "text-terminal-text-dim hover:text-terminal-text hover:bg-terminal-green/10"
               )}
             >
               <span className={clsx("text-[9px] font-bold w-7 text-center shrink-0", active ? "text-terminal-green/70" : "text-terminal-text-muted")}>

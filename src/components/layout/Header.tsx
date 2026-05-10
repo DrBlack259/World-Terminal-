@@ -55,7 +55,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
   );
 
   return (
-    <header className="h-10 flex-shrink-0 bg-terminal-panel border-b border-terminal-border flex items-center px-2 sm:px-4 gap-2 sm:gap-4 relative z-50">
+    <header className="h-12 flex-shrink-0 bg-terminal-panel border-b border-terminal-border/60 flex items-center px-2 sm:px-4 gap-2 sm:gap-4 relative z-50 shadow-[0_10px_30px_rgba(2,7,18,0.4)]">
       {/* Hamburger — mobile only */}
       <button
         onClick={onMenuToggle}
@@ -97,7 +97,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
         {/* VISUAL button */}
         <Link
           href={isVisual ? "/" : "/visual"}
-          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 rounded border text-[10px] font-bold tracking-widest uppercase transition-all ${
+          className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg border text-[10px] font-bold tracking-widest uppercase transition-all ${
             isVisual
               ? "bg-terminal-purple/20 border-terminal-purple text-terminal-purple shadow-[0_0_12px_rgba(187,119,255,0.3)]"
               : "bg-terminal-purple/10 border-terminal-purple/40 text-terminal-purple hover:border-terminal-purple hover:shadow-[0_0_12px_rgba(187,119,255,0.25)]"
@@ -111,7 +111,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
         <div ref={dropdownRef} className="relative">
           <button
             onClick={() => { setOpen((o) => !o); setSearch(""); }}
-            className="flex items-center gap-1 sm:gap-1.5 bg-terminal-bg border border-terminal-border rounded px-2 py-1 text-[10px] hover:border-terminal-green/50 transition-colors"
+            className="flex items-center gap-1 sm:gap-1.5 bg-terminal-bg/80 border border-terminal-border rounded-lg px-2 py-1.5 text-[10px] hover:border-terminal-green/50 transition-colors"
           >
             <span className="text-base leading-none">{info.flag}</span>
             <span className="text-terminal-green font-bold tracking-wider">{info.code}</span>
@@ -124,7 +124,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
           </button>
 
           {open && (
-            <div className="absolute right-0 top-full mt-1 w-72 bg-terminal-panel border border-terminal-border rounded shadow-2xl z-50 flex flex-col max-h-80 sm:max-h-96">
+            <div className="absolute right-0 top-full mt-2 w-72 bg-terminal-panel border border-terminal-border rounded-xl shadow-2xl z-50 flex flex-col max-h-80 sm:max-h-96">
               <div className="px-3 py-2 border-b border-terminal-border flex items-center justify-between">
                 <span className="text-[9px] font-bold uppercase tracking-widest text-terminal-green">SELECT CURRENCY</span>
                 <div className="flex items-center gap-1.5">
@@ -147,7 +147,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search currency..."
                   autoFocus
-                  className="w-full bg-terminal-bg border border-terminal-border rounded px-2 py-1 text-[10px] text-terminal-text placeholder-terminal-text-muted focus:outline-none focus:border-terminal-green/50"
+                  className="w-full bg-terminal-bg/80 border border-terminal-border rounded-lg px-2 py-1.5 text-[10px] text-terminal-text placeholder-terminal-text-muted focus:outline-none focus:border-terminal-green/50"
                 />
               </div>
               <div className="overflow-y-auto flex-1">

@@ -26,8 +26,8 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
-      <div className="flex-shrink-0 px-4 py-2 border-b border-terminal-border bg-terminal-panel flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex-shrink-0 px-4 py-3 border-b border-terminal-border/60 bg-terminal-panel flex items-center justify-between rounded-b-xl">
+        <div className="flex items-center gap-3">
           <Globe className="w-4 h-4 text-terminal-green" />
           <span className="text-terminal-green text-xs font-bold tracking-widest">GLOBAL OVERVIEW DASHBOARD</span>
         </div>
@@ -37,9 +37,9 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="flex-1 p-3 overflow-y-auto">
+      <div className="flex-1 p-4 overflow-y-auto">
         {/* Stat Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-2 mb-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-3 mb-4">
           <StatCard label="Active Deals" value="847" sublabel="global" icon={TrendingUp} color="green" trend="up" trendValue="+12" />
           <StatCard label={`Deal Value (${selectedCurrency})`} value={fmt(totalDealValueMn)} sublabel="tracked" icon={DollarSign} color="green" trend="up" trendValue={`+${fmt(48000)}`} />
           <StatCard label="Active Conflicts" value="43" sublabel="worldwide" icon={Swords} color="red" trend="up" trendValue="+2" />
@@ -50,17 +50,17 @@ export default function Dashboard() {
         </div>
 
         {/* Main Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-3">
           {/* CRITICAL CONFLICTS */}
           <div className="md:col-span-1 xl:col-span-4 terminal-panel border border-terminal-border flex flex-col">
             <div className="terminal-header flex items-center justify-between">
-              <div className="flex items-center gap-2"><Swords className="w-3 h-3" />CRITICAL CONFLICTS</div>
+              <div className="flex items-center gap-3"><Swords className="w-3 h-3" />CRITICAL CONFLICTS</div>
               <LiveBadge color="red" />
             </div>
             <div className="flex-1 overflow-y-auto divide-y divide-terminal-border/40">
               {criticalConflicts.map((c) => (
                 <div key={c.id} className="px-3 py-2 hover:bg-white/5 transition-colors">
-                  <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="badge-red text-[8px]">{c.type}</span>
@@ -80,7 +80,7 @@ export default function Dashboard() {
           {/* HOT DEALS */}
           <div className="md:col-span-1 xl:col-span-4 terminal-panel border border-terminal-border flex flex-col">
             <div className="terminal-header flex items-center justify-between">
-              <div className="flex items-center gap-2"><TrendingUp className="w-3 h-3" />HOT DEALS</div>
+              <div className="flex items-center gap-3"><TrendingUp className="w-3 h-3" />HOT DEALS</div>
               <span className="text-[9px] text-terminal-text-dim">{selectedCurrency}</span>
             </div>
             <div className="flex-1 overflow-y-auto divide-y divide-terminal-border/40">
@@ -107,7 +107,7 @@ export default function Dashboard() {
           {/* ELITE INTEL */}
           <div className="md:col-span-2 xl:col-span-4 terminal-panel border border-terminal-border flex flex-col">
             <div className="terminal-header flex items-center justify-between">
-              <div className="flex items-center gap-2"><Eye className="w-3 h-3" />ELITE INTELLIGENCE</div>
+              <div className="flex items-center gap-3"><Eye className="w-3 h-3" />ELITE INTELLIGENCE</div>
               <LiveBadge color="red" label="SENSITIVE" />
             </div>
             <div className="flex-1 overflow-y-auto divide-y divide-terminal-border/40">
@@ -132,7 +132,7 @@ export default function Dashboard() {
           {/* MONEY FLOW */}
           <div className="md:col-span-1 xl:col-span-6 terminal-panel border border-terminal-border flex flex-col">
             <div className="terminal-header flex items-center justify-between">
-              <div className="flex items-center gap-2"><DollarSign className="w-3 h-3" />INSTITUTIONAL MONEY FLOW</div>
+              <div className="flex items-center gap-3"><DollarSign className="w-3 h-3" />INSTITUTIONAL MONEY FLOW</div>
               <span className="text-[9px] text-terminal-text-dim">{selectedCurrency}</span>
             </div>
             <div className="flex-1 overflow-y-auto divide-y divide-terminal-border/40">
@@ -141,7 +141,7 @@ export default function Dashboard() {
                 return (
                   <div key={m.id} className="px-3 py-2 hover:bg-white/5 transition-colors">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
                         <span className={`text-[9px] font-bold px-2 py-0.5 rounded border ${isBuy ? "text-terminal-green border-terminal-green/30 bg-terminal-green/10" : "text-terminal-red border-terminal-red/30 bg-terminal-red/10"}`}>{m.type}</span>
                         <span className="text-terminal-text text-[10px] font-bold">{m.institution}</span>
                       </div>
@@ -161,14 +161,14 @@ export default function Dashboard() {
           {/* OPEN TENDERS */}
           <div className="md:col-span-1 xl:col-span-6 terminal-panel border border-terminal-border flex flex-col">
             <div className="terminal-header flex items-center justify-between">
-              <div className="flex items-center gap-2"><Pickaxe className="w-3 h-3" />OPEN RESOURCE TENDERS</div>
+              <div className="flex items-center gap-3"><Pickaxe className="w-3 h-3" />OPEN RESOURCE TENDERS</div>
               <span className="text-[9px] text-terminal-text-dim">{selectedCurrency}</span>
             </div>
             <div className="flex-1 overflow-y-auto divide-y divide-terminal-border/40">
               {resourcesData.filter((r) => r.tenderStatus === "OPEN").slice(0, 4).map((r) => (
                 <div key={r.id} className="px-3 py-2 hover:bg-white/5 transition-colors">
                   <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       <span className="badge-amber text-[8px]">{r.resource}</span>
                       <span className="text-terminal-text-dim text-[9px]">{r.country}</span>
                     </div>

@@ -155,7 +155,7 @@ function DetailPanel({ marker, onClose, fmt }: { marker: MarkerData; onClose: ()
 export default function VisualPage() {
   const [activeLayers, setActiveLayers] = useState<Set<LayerKey>>(new Set<LayerKey>(["conflicts","resources","deals","elections","intel","money"]));
   const [selected, setSelected] = useState<MarkerData | null>(null);
-  const [mapMode, setMapMode] = useState<"svg" | "real">("svg");
+  const [mapMode, setMapMode] = useState<"svg" | "real">("real");
   const [showFeed, setShowFeed] = useState(false);
   const { fmt } = useCurrency();
   const liveData = useLiveData(60_000);

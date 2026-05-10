@@ -28,7 +28,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   return (
     <aside
       className={clsx(
-        "flex-shrink-0 bg-terminal-panel border-r border-terminal-border/60 flex flex-col z-40 transition-transform duration-200 shadow-[0_12px_40px_rgba(2,7,18,0.45)]",
+        "flex-shrink-0 terminal-surface rounded-none border-l-0 border-y-0 border-r border-terminal-border/60 flex flex-col z-40 transition-transform duration-200 shadow-[0_12px_40px_rgba(2,7,18,0.45)]",
         // Mobile: fixed drawer sliding in from left
         "fixed top-0 left-0 h-full w-[240px]",
         isOpen ? "translate-x-0" : "-translate-x-full",

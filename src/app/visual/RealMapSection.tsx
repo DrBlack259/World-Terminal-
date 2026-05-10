@@ -1,6 +1,6 @@
 "use client";
-import { MapContainer, TileLayer, CircleMarker, Polyline, Tooltip, Marker, useMap } from "react-leaflet";
-import { useEffect } from "react";
+import { MapContainer, TileLayer, CircleMarker, Polyline, Tooltip, useMap } from "react-leaflet";
+import { useEffect, useState } from "react";
 import { conflictsData, resourcesData, dealsData, electionsData, intelligenceData, moneyMovesData } from "@/lib/mockData";
 import { LayerKey, MarkerData } from "./WorldMapSection";
 import { useCurrency } from "@/context/CurrencyContext";
@@ -116,35 +116,66 @@ function FitWorld() {
 
 export default function RealMapSection({ activeLayers, onMarkerClick, selectedId }: Props) {
   const { fmt } = useCurrency();
+  const [mapStyle, setMapStyle] = useState<"road" | "sat" | "hybrid">("hybrid");
 
   return (
-    <MapContainer
-      center={[20, 10]}
-      zoom={2}
-      minZoom={0}
-      maxZoom={18}
-      zoomControl={true}
-      worldCopyJump={true}
-      style={{ height: "100%", width: "100%", minHeight: 0, background: "#00000e" }}
-    >
-      <FitWorld />
+    <div className="relative h-full w-full">
+      <div className="absolute top-3 left-3 z-[1000] bg-[#0f1726]/90 border border-white/20 rounded-xl shadow-xl overflow-hidden backdrop-blur-sm">
+        {([
+          { key: "road", label: "Map" },
+          { key: "sat", label: "Satellite" },
+          { key: "hybrid", label: "Hybrid" },
+        ] as const).map((s) => (
+          <button
+            key={s.key}
+            onClick={() => setMapStyle(s.key)}
+            className={`px-3 py-1.5 text-[10px] font-semibold border-r border-white/10 last:border-r-0 transition-colors ${
+              mapStyle === s.key ? "bg-white text-slate-900" : "text-white/85 hover:bg-white/10"
+            }`}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+      <div className="absolute top-3 right-3 z-[1000] px-2 py-1 rounded-lg bg-black/40 border border-white/20 text-[10px] text-white/90 font-medium backdrop-blur-sm">
+        Drag to pan · Scroll to zoom
+      </div>
+      <MapContainer
+        center={[20, 10]}
+        zoom={2}
+        minZoom={2}
+        maxZoom={18}
+        zoomControl={true}
+        worldCopyJump={true}
+        style={{ height: "100%", width: "100%", minHeight: 0, background: "#00000e" }}
+      >
+        <FitWorld />
 
-      {/* ESRI World Imagery — real satellite tiles, free, no API key */}
-      <TileLayer
-        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-        attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-        maxZoom={19}
-        maxNativeZoom={17}
-      />
+        {mapStyle !== "road" && (
+          <TileLayer
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+            maxZoom={19}
+            maxNativeZoom={17}
+          />
+        )}
+        {(mapStyle === "road" || mapStyle === "hybrid") && (
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution="&copy; OpenStreetMap contributors"
+            maxZoom={19}
+          />
+        )}
 
-      {/* ESRI World Labels overlay — city/country names like Google Earth hybrid */}
-      <TileLayer
-        url="https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
-        attribution=""
-        maxZoom={19}
-        maxNativeZoom={17}
-        opacity={0.8}
-      />
+        {mapStyle === "hybrid" && (
+          <TileLayer
+            url="https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+            attribution=""
+            maxZoom={19}
+            maxNativeZoom={17}
+            opacity={0.9}
+          />
+        )}
 
       {/* ── MONEY FLOW ROUTES ── */}
       {activeLayers.has("money") && <>
@@ -245,6 +276,7 @@ export default function RealMapSection({ activeLayers, onMarkerClick, selectedId
           </CircleMarker>
         );
       })}
-    </MapContainer>
+      </MapContainer>
+    </div>
   );
 }
